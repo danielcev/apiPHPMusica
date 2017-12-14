@@ -13,7 +13,7 @@ class Model_Roles extends Orm\Model
         'model_to' => 'Model_Usuarios',
         'key_to' => 'id_rol',
         'cascade_save' => true,
-        'cascade_delete' => true,
+        'cascade_delete' => false,
     )
 );
 

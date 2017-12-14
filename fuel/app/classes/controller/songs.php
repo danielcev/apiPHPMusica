@@ -14,7 +14,7 @@ class Controller_Songs extends Controller_Rest{
             if (!isset($_POST['title']) || $_POST['url_youtube'] == "") 
             {
 
-              $this->createResponse(400, 'Parámetros incorrectos');
+                $this->createResponse(400, 'Parámetros incorrectos');
 
             }
 
@@ -33,7 +33,7 @@ class Controller_Songs extends Controller_Rest{
 	                $this->createResponse(200, 'Canción creada', ['song' => $new]);
 
 	            }else{
-	                $this->createResponse(400, 'Canción ya creada');
+	                $this->createResponse(400, 'Canción ya existente');
 	            }
 
 	        }else{
@@ -55,19 +55,19 @@ class Controller_Songs extends Controller_Rest{
 
         	$id = $_POST['id'];
        
-          $song = Model_Canciones::find($id);
+            $song = Model_Canciones::find($id);
 
-          if($song != null){
-          	$song->delete();
+            if($song != null){
+              	$song->delete();
 
-          	$this->createResponse(200, 'Canción borrada correctamente', ['song' => $song]);
-          }else{
-          	$this->createResponse(400, 'No existen canciones');
-          }
+              	$this->createResponse(200, 'Canción borrada correctamente', ['song' => $song]);
+            }else{
+              	$this->createResponse(400, 'La canción no existe');
+            }
           
         }else{
 
-          $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
         }
     }
@@ -76,17 +76,15 @@ class Controller_Songs extends Controller_Rest{
 
         $jwt = apache_request_headers()['Authorization'];
 
-
         if($this->validateToken($jwt)){
-
           
-          $songs = Model_Canciones::find('all');
+            $songs = Model_Canciones::find('all');
 
-          if($songs != null){
-            $this->createResponse(200, 'Canciones devueltas', ['songs' => $songs]);
-          }else{
-            $this->createResponse(200, 'No hay canciones');
-          }
+            if($songs != null){
+                $this->createResponse(200, 'Canciones devueltas', ['songs' => $songs]);
+            }else{
+                $this->createResponse(200, 'No hay canciones');
+            }
 
         }else{
 
@@ -110,17 +108,17 @@ class Controller_Songs extends Controller_Rest{
 
     function songExists($title, $url_youtube){
 
-      $songs = Model_Canciones::find('all', array(
+        $songs = Model_Canciones::find('all', array(
                   'where' => array(
                       array('titulo', $title),
                       array('url_youtube', $url_youtube)
                 )));
 
-      if($songs != null){
-          return true;
-      }else{
-          return false;
-      }
+        if($songs != null){
+            return true;
+        }else{
+            return false;
+        }
 
    }
 
@@ -138,9 +136,9 @@ class Controller_Songs extends Controller_Rest{
         ));
 
         if($userDB != null){
-          return true;
+            return true;
         }else{
-          return false;
+            return false;
         }
     }
 

@@ -15,13 +15,14 @@ class Controller_Lists extends Controller_Rest{
             if (!isset($_POST['title']) || $_POST['title'] == "") 
             {
 
-              $this->createResponse(400, 'Parámetros incorrectos');
+                $this->createResponse(400, 'Parámetros incorrectos');
 
             }
 
             if($this->validateToken($jwt)){
-              $id_user = $token->data->id;
-              $title = $_POST['title'];
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id_user = $token->data->id;
+                $title = $_POST['title'];
 
               if(!$this->listExists($id_user, $title)){
 
@@ -33,14 +34,13 @@ class Controller_Lists extends Controller_Rest{
                   $this->createResponse(200, 'Lista creada', ['list' => $new]);
 
               }else{
-                  $this->createResponse(400, 'Lista ya creada');
+                  $this->createResponse(400, 'Lista ya creada por este usuario');
               }
 
             }else{
                   $this->createResponse(400, 'El token no es válido');
             }
-
-        	  
+	  
         }
         catch (Exception $e) 
         {
@@ -54,9 +54,9 @@ class Controller_Lists extends Controller_Rest{
 
         $jwt = apache_request_headers()['Authorization'];
 
-
         if($this->validateToken($jwt)){
 
+          $token = JWT::decode($jwt, $this->key, array('HS256'));
           $id_user = $token->data->id;
           
           $lists = Model_Listas::find('all', array(
@@ -82,16 +82,28 @@ class Controller_Lists extends Controller_Rest{
     	$jwt = apache_request_headers()['Authorization'];
 
         if($this->validateToken($jwt)){
-          $id = $_POST['id'];
+            $token = JWT::decode($jwt, $this->key, array('HS256'));
+            $id = $_POST['id'];
        
-          $list = Model_Listas::find($id);
-          $list->delete();
+            $list = Model_Listas::find('first', array(
+                'where' => array(
+                    array('id', $id),
+                    array('id_usuario', $token->data->id)
+                )
+            ));
 
-          $this->createResponse(200, 'Lista borrada correctamente', ['list' => $list]);
+        if ($list != null){
+            $list->delete();
 
+            $this->createResponse(200, 'Lista borrada correctamente', ['list' => $list]);
         }else{
 
-          $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+            $this->createResponse(400, 'No puedes realizar esta acción');
+        }
+          
+        }else{
+
+            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
         }
     }
@@ -100,18 +112,31 @@ class Controller_Lists extends Controller_Rest{
         $jwt = apache_request_headers()['Authorization'];
 
         if($this->validateToken($jwt)){
-          $id = $_POST['id'];
-          $title = $_POST['title'];
-       
-          $list = Model_Listas::find($id);
-          $list->title = $title;
-          $list->save();
+            $token = JWT::decode($jwt, $this->key, array('HS256'));
+            $id_user = $token->data->id;
 
-          $this->createResponse(200, 'Lista editada', ['list' => $list]);
+            $id = $_POST['id'];
+            $title = $_POST['title'];
+
+            $list = Model_Listas::find('first', array(
+                'where' => array(
+                    array('id', $id),
+                    array('id_usuario', $id_user)
+                )
+            ));
+
+            if($list != null){
+                $list->titulo = $title;
+                $list->save();
+
+                $this->createResponse(200, 'Lista editada', ['list' => $list]);
+            }else{
+                $this->createResponse(400, 'No puedes realizar esta acción');
+            }
 
         }else{
 
-          $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
         }
     }
@@ -142,6 +167,56 @@ class Controller_Lists extends Controller_Rest{
 
    }
 
+   function post_addSong(){
+        $jwt = apache_request_headers()['Authorization'];
+
+        if($this->validateToken($jwt)){
+            $id_cancion = $_POST['id_cancion'];
+            $id_lista = $_POST['id_lista'];
+
+            $contener = Model_Contener::find('first', array(
+                'where' => array(
+                    array('id_lista', $id_lista),
+                    array('id_cancion', $id_cancion)
+                )
+            ));
+
+            if($contener == null){
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id_user = $token->data->id;
+
+                $list = Model_Listas::find('first', array(
+                    'where' => array(
+                        array('id', $id_lista),
+                        array('id_usuario', $id_user)
+                    )
+                ));
+
+                if($list != null){
+
+                    $props = array('id_cancion' => $id_cancion, 'id_lista' => $id_lista);
+
+                    $new = new Model_Contener($props);
+                    $new->save();
+
+                    $this->createResponse(200, 'Canción añadida a la lista', ['list' => $list]);
+                    
+                }else{
+
+                    $this->createResponse(400, 'No tienes permiso para añadir canciones a esa lista');
+
+                }
+            }else{
+                $this->createResponse(400, 'La canción ya pertenece a la lista');
+            }
+
+        }else{
+
+            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+        }
+   }
+
    function listExists($id_user, $title){
 
       $lists = Model_Listas::find('all', array(
@@ -151,9 +226,9 @@ class Controller_Lists extends Controller_Rest{
                 )));
 
       if($lists != null){
-          return true;
+            return true;
       }else{
-          return false;
+            return false;
       }
 
    }
@@ -184,9 +259,9 @@ class Controller_Lists extends Controller_Rest{
         ));
 
         if($userDB != null){
-          return true;
+            return true;
         }else{
-          return false;
+            return false;
         }
     }
 

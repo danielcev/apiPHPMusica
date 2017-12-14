@@ -48,7 +48,7 @@ class Controller_Users extends Controller_Rest
    function get_login()
    {
 
-     	  $username = $_GET['username'];
+     	$username = $_GET['username'];
   	    $password = $_GET['password'];
 
       	$userDB = Model_Usuarios::find('first', array(
@@ -73,11 +73,11 @@ class Controller_Users extends Controller_Rest
 
       		$jwt = JWT::encode($token, $this->key);
 
-          $this->createResponse(200, 'login correcto', ['token' => $jwt, 'username' => $username]);
+            $this->createResponse(200, 'login correcto', ['token' => $jwt, 'username' => $username]);
 
       	}else{
 
-          $this->createResponse(400, 'El usuario no existe');
+            $this->createResponse(400, 'El usuario no existe');
 
       	}
 
@@ -131,13 +131,13 @@ class Controller_Users extends Controller_Rest
         $jwt = apache_request_headers()['Authorization'];
 
         if($this->validateToken($jwt)){
-          $usersDB = Model_Usuarios::find('all');
+            $usersDB = Model_Usuarios::find('all');
 
-          $this->createResponse(200, 'Usuarios devueltos', ['users' => $usersDB]);
+            $this->createResponse(200, 'Usuarios devueltos', ['users' => $usersDB]);
 
         }else{
 
-          $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
         }
 
@@ -148,16 +148,20 @@ class Controller_Users extends Controller_Rest
         $jwt = apache_request_headers()['Authorization'];
 
         if($this->validateToken($jwt)){
-          $id = $_POST['id'];
+            $id = $_POST['id'];
        
-          $usuario = Model_Usuarios::find($id);
-          $usuario->delete();
+            $usuario = Model_Usuarios::find($id);
 
-          $this->createResponse(200, 'Usuario borrado', ['usuario' => $usuario]);
+            if($usuario != null){
+                $usuario->delete();
 
+                $this->createResponse(200, 'Usuario borrado', ['usuario' => $usuario]);
+            }else{
+                $this->createResponse(400, 'El usuario introducido no existe');
+            }
+          
         }else{
-
-          $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
         }
       
@@ -167,20 +171,24 @@ class Controller_Users extends Controller_Rest
         $jwt = apache_request_headers()['Authorization'];
 
         if($this->validateToken($jwt)){
-          $id = $_POST['id'];
-          $username = $_POST['username'];
-          $password = $_POST['password'];
+            $id = $_POST['id'];
+            $username = $_POST['username'];
+            $password = $_POST['password'];
        
-          $usuario = Model_Usuarios::find($id);
-          $usuario->nombre = $username;
-          $usuario->contraseña = $password;
-          $usuario->save();
+            $usuario = Model_Usuarios::find($id);
 
-          $this->createResponse(200, 'Usuario editado', ['usuario' => $usuario]);
-
+            if($usuario != null){
+                $usuario->nombre = $username;
+                $usuario->contraseña = $password;
+                $usuario->save();
+                $this->createResponse(200, 'Usuario editado', ['usuario' => $usuario]);
+            }else{
+                $this->createResponse(400, 'El usuario introducido no existe');
+            }
+            
         }else{
 
-          $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
         }
     }
@@ -191,7 +199,7 @@ class Controller_Users extends Controller_Rest
                     'where' => array(
                         array('nombre', $username)
                     )
-                  )); 
+                )); 
 
         if($userDB != null){
             return true;

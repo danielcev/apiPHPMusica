@@ -22,7 +22,7 @@ class Model_Usuarios extends Orm\Model
         'model_to' => 'Model_Roles',
         'key_to' => 'id',
         'cascade_save' => true,
-        'cascade_delete' => true,
+        'cascade_delete' => false,
     ));
 
 }
