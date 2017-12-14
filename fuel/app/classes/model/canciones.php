@@ -6,12 +6,8 @@ class Model_Canciones extends Orm\Model
    	protected static $_table_name = 'canciones'; 
 	protected static $_properties = array(
 	      'id',
-	      'titulo' => array( 
-	         'data_type' => 'varchar'
-	      ),
-	      'url_youtube' => array( 
-	         'data_type' => 'varchar'
-	      )
+	      'titulo',
+	      'url_youtube'
 	   );
 
 	protected static $_many_many = array(

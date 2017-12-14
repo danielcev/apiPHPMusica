@@ -30,7 +30,7 @@ class Model_Listas extends Orm\Model
         'key_to' => 'id',
         'cascade_save' => true,
         'cascade_delete' => true,
-    );
-);
+    ));
+
 	
 }

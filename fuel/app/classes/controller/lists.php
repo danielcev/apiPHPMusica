@@ -19,24 +19,28 @@ class Controller_Lists extends Controller_Rest{
 
             }
 
-            $token = JWT::decode($jwt, $this->key, array('HS256'));
+            if($this->validateToken($jwt)){
+              $id_user = $token->data->id;
+              $title = $_POST['title'];
 
-        	  $id_user = $token->data->id;
-            $title = $_POST['title'];
+              if(!$this->listExists($id_user, $title)){
 
-            if(!$this->listExists($id_user, $title)){
+                  $props = array('id_usuario' => $id_user, 'titulo' => $title);
 
-                $props = array('id_user' => $id_user, 'title' => $title);
+                  $new = new Model_Listas($props);
+                  $new->save();
 
-                $new = new Model_List($props);
-                $new->save();
+                  $this->createResponse(200, 'Lista creada', ['list' => $new]);
 
-                $this->createResponse(200, 'Lista creada', ['list' => $new]);
+              }else{
+                  $this->createResponse(400, 'Lista ya creada');
+              }
 
             }else{
-                $this->createResponse(400, 'Lista ya creada');
+                  $this->createResponse(400, 'El token no es válido');
             }
 
+        	  
         }
         catch (Exception $e) 
         {
@@ -50,15 +54,14 @@ class Controller_Lists extends Controller_Rest{
 
         $jwt = apache_request_headers()['Authorization'];
 
-        $token = JWT::decode($jwt, $this->key, array('HS256'));
-
-        $id_user = $token->data->id;
 
         if($this->validateToken($jwt)){
+
+          $id_user = $token->data->id;
           
-          $lists = Model_List::find('all', array(
+          $lists = Model_Listas::find('all', array(
     		    'where' => array(
-        		    array('id_user', $id_user),
+        		    array('id_usuario', $id_user),
     		  )));
 
           if($lists != null){
@@ -81,7 +84,7 @@ class Controller_Lists extends Controller_Rest{
         if($this->validateToken($jwt)){
           $id = $_POST['id'];
        
-          $list = Model_List::find($id);
+          $list = Model_Listas::find($id);
           $list->delete();
 
           $this->createResponse(200, 'Lista borrada correctamente', ['list' => $list]);
@@ -100,7 +103,7 @@ class Controller_Lists extends Controller_Rest{
           $id = $_POST['id'];
           $title = $_POST['title'];
        
-          $list = Model_List::find($id);
+          $list = Model_Listas::find($id);
           $list->title = $title;
           $list->save();
 
@@ -119,7 +122,7 @@ class Controller_Lists extends Controller_Rest{
         if($this->validateToken($jwt)){
             $id = $_GET['id'];
 
-            $list = Model_List::find($id);
+            $list = Model_Listas::find($id);
 
             if($list != null){
 
@@ -141,10 +144,10 @@ class Controller_Lists extends Controller_Rest{
 
    function listExists($id_user, $title){
 
-      $lists = Model_List::find('all', array(
+      $lists = Model_Listas::find('all', array(
                   'where' => array(
-                      array('id_user', $id_user),
-                      array('title', $title)
+                      array('id_usuario', $id_user),
+                      array('titulo', $title)
                 )));
 
       if($lists != null){
@@ -173,10 +176,10 @@ class Controller_Lists extends Controller_Rest{
         $username = $token->data->username;
         $password = $token->data->password;
 
-        $userDB = Model_User::find('all', array(
+        $userDB = Model_Usuarios::find('all', array(
         'where' => array(
-              array('username', $username),
-              array('password', $password)
+              array('nombre', $username),
+              array('contraseña', $password)
             )
         ));
 

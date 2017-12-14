@@ -19,16 +19,16 @@ class Controller_Users extends Controller_Rest
 
             }
 
-            $username = $_POST['username'];
+            $nombre = $_POST['username'];
             $password = $_POST['password'];
 
-            if(!$this->userExists($username)){ //Si el usuario todavía no existe
-                $props = array('username' => $username, 'password' => $password);
+            if(!$this->userExists($nombre)){ //Si el usuario todavía no existe
+                $props = array('nombre' => $nombre, 'contraseña' => $password, 'id_rol' => 1);
 
-                $new = new Model_User($props);
+                $new = new Model_Usuarios($props);
                 $new->save();
 
-                $this->createResponse(200, 'Usuario creado', ['username' => $username]);
+                $this->createResponse(200, 'Usuario creado', ['nombre' => $nombre]);
 
             }else{ //Si el usuario introducido ya existe
 
@@ -36,13 +36,13 @@ class Controller_Users extends Controller_Rest
 
             } 
 
-        }
+       }
         catch (Exception $e) 
         {
             $this->createResponse(500, $e->getMessage());
 
         }      
-
+        
    }
 
    function get_login()
@@ -51,10 +51,10 @@ class Controller_Users extends Controller_Rest
      	  $username = $_GET['username'];
   	    $password = $_GET['password'];
 
-      	$userDB = Model_User::find('first', array(
+      	$userDB = Model_Usuarios::find('first', array(
           	'where' => array(
-              	array('username', $username),
-              	array('password', $password)
+              	array('nombre', $username),
+              	array('contraseña', $password)
           	),
       	));
 
@@ -106,7 +106,7 @@ class Controller_Users extends Controller_Rest
         if($this->validateToken($jwt)){
             $id = $_GET['id'];
 
-            $userDB = Model_User::find($id);
+            $userDB = Model_Usuarios::find($id);
 
             if($userDB != null){
 
@@ -131,7 +131,7 @@ class Controller_Users extends Controller_Rest
         $jwt = apache_request_headers()['Authorization'];
 
         if($this->validateToken($jwt)){
-          $usersDB = Model_User::find('all');
+          $usersDB = Model_Usuarios::find('all');
 
           $this->createResponse(200, 'Usuarios devueltos', ['users' => $usersDB]);
 
@@ -150,7 +150,7 @@ class Controller_Users extends Controller_Rest
         if($this->validateToken($jwt)){
           $id = $_POST['id'];
        
-          $usuario = Model_User::find($id);
+          $usuario = Model_Usuarios::find($id);
           $usuario->delete();
 
           $this->createResponse(200, 'Usuario borrado', ['usuario' => $usuario]);
@@ -171,9 +171,9 @@ class Controller_Users extends Controller_Rest
           $username = $_POST['username'];
           $password = $_POST['password'];
        
-          $usuario = Model_User::find($id);
-          $usuario->username = $username;
-          $usuario->password = $password;
+          $usuario = Model_Usuarios::find($id);
+          $usuario->nombre = $username;
+          $usuario->contraseña = $password;
           $usuario->save();
 
           $this->createResponse(200, 'Usuario editado', ['usuario' => $usuario]);
@@ -187,9 +187,9 @@ class Controller_Users extends Controller_Rest
 
     function userExists($username){
 
-        $userDB = Model_User::find('first', array(
+        $userDB = Model_Usuarios::find('first', array(
                     'where' => array(
-                        array('username', $username)
+                        array('nombre', $username)
                     )
                   )); 
 
@@ -206,10 +206,10 @@ class Controller_Users extends Controller_Rest
         $username = $token->data->username;
         $password = $token->data->password;
 
-        $userDB = Model_User::find('all', array(
+        $userDB = Model_Usuarios::find('all', array(
         'where' => array(
-            array('username', $username),
-            array('password', $password)
+            array('nombre', $username),
+            array('contraseña', $password)
             )
         ));
 

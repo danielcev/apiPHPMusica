@@ -7,7 +7,7 @@ class Listas
     function up()
     {
         \DBUtil::create_table('listas', array(
-            'id' => array('type' => 'int', 'constraint' => 5, 'auto_increment' => 'true'),
+            'id' => array('type' => 'int', 'constraint' => 5, 'auto_increment' => true),
             'titulo' => array('type' => 'varchar', 'constraint' => 100),
             'id_usuario' => array('type' => 'int', 'constraint' => 5)
         ), array('id'),
