@@ -168,6 +168,9 @@ class Controller_Lists extends Controller_Rest{
    }
 
    function post_addSong(){
+
+    try{
+
         $jwt = apache_request_headers()['Authorization'];
 
         if($this->validateToken($jwt)){
@@ -206,8 +209,8 @@ class Controller_Lists extends Controller_Rest{
                     $this->createResponse(400, 'No tienes permiso para añadir canciones a esa lista');
 
                 }
-            }else{
-                $this->createResponse(400, 'La canción ya pertenece a la lista');
+           }else{
+                 $this->createResponse(400, 'La canción ya pertenece a la lista');
             }
 
         }else{
@@ -215,6 +218,10 @@ class Controller_Lists extends Controller_Rest{
             $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
         }
+
+    }catch(Exception $e){
+        $this->createResponse(500, $e->getMessage());
+    }
    }
 
    function listExists($id_user, $title){

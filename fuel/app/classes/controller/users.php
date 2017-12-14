@@ -65,7 +65,7 @@ class Controller_Users extends Controller_Rest
       		$token = array(
       		    'iat' => $time, 
       		    'data' => [ 
-                  'id' => $userDB['id'],
+                    'id' => $userDB['id'],
       		        'username' => $username,
       		        'password' => $password
       		    ]

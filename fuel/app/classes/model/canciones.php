@@ -19,7 +19,7 @@ class Model_Canciones extends Orm\Model
 	        'model_to' => 'Model_Listas',
 	        'key_to' => 'id',
 	        'cascade_save' => true,
-	        'cascade_delete' => true,
+	        'cascade_delete' => false,
     	)
 	);
 	
