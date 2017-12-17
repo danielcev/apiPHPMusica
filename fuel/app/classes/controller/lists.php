@@ -9,9 +9,10 @@ class Controller_Lists extends Controller_Rest{
 
 	function post_create()
    	{
-   		$jwt = apache_request_headers()['Authorization'];
-
+   		
         try {
+            $jwt = apache_request_headers()['Authorization'];
+
             if (!isset($_POST['titulo']) || $_POST['titulo'] == "") 
             {
 
@@ -52,116 +53,141 @@ class Controller_Lists extends Controller_Rest{
 
    	function get_lists(){
 
-        $jwt = apache_request_headers()['Authorization'];
+        try{
+            $jwt = apache_request_headers()['Authorization'];
 
-        if($this->validateToken($jwt)){
+            if($this->validateToken($jwt)){
 
-          $token = JWT::decode($jwt, $this->key, array('HS256'));
-          $id_usuario = $token->data->id;
-          
-          $lists = Model_Listas::find('all', array(
-    		    'where' => array(
-        		    array('id_usuario', $id_usuario),
-    		  )));
+              $token = JWT::decode($jwt, $this->key, array('HS256'));
+              $id_usuario = $token->data->id;
+              
+              $lists = Model_Listas::find('all', array(
+                    'where' => array(
+                        array('id_usuario', $id_usuario),
+                  )));
 
-          if($lists != null){
-            $this->createResponse(200, 'Listas devueltas', ['lists' => $lists]);
-          }else{
-            $this->createResponse(200, 'No hay listas', ['lists' => null]);
-          }
+              if($lists != null){
+                $this->createResponse(200, 'Listas devueltas', ['lists' => $lists]);
+              }else{
+                $this->createResponse(200, 'No hay listas', ['lists' => null]);
+              }
 
-        }else{
+            }else{
 
-          $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+              $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
-        }
+            }
+        }catch (Exception $e) {
+            $this->createResponse(500, $e->getMessage());
+
+        }  
 
     }
 
     function post_borrar(){
-    	$jwt = apache_request_headers()['Authorization'];
 
-        if($this->validateToken($jwt)){
-            $token = JWT::decode($jwt, $this->key, array('HS256'));
-            $id = $_POST['id'];
-       
-            $list = Model_Listas::find('first', array(
-                'where' => array(
-                    array('id', $id),
-                    array('id_usuario', $token->data->id)
-                )
-            ));
+        try{
+            $jwt = apache_request_headers()['Authorization'];
 
-        if ($list != null){
-            $list->delete();
+            if($this->validateToken($jwt)){
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id = $_POST['id'];
+           
+                $list = Model_Listas::find('first', array(
+                    'where' => array(
+                        array('id', $id),
+                        array('id_usuario', $token->data->id)
+                    )
+                ));
 
-            $this->createResponse(200, 'Lista borrada correctamente', ['list' => $list]);
-        }else{
+            if ($list != null){
+                $list->delete();
 
-            $this->createResponse(400, 'No puedes realizar esta acción');
-        }
-          
-        }else{
+                $this->createResponse(200, 'Lista borrada correctamente', ['list' => $list]);
+            }else{
 
-            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+                $this->createResponse(400, 'No puedes realizar esta acción');
+            }
+              
+            }else{
 
-        }
+                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+            }
+        }catch (Exception $e) {
+            $this->createResponse(500, $e->getMessage());
+
+        } 
+
     }
 
     function post_edit(){
-        $jwt = apache_request_headers()['Authorization'];
 
-        if($this->validateToken($jwt)){
-            $token = JWT::decode($jwt, $this->key, array('HS256'));
-            $id_usuario = $token->data->id;
+        try{
+            $jwt = apache_request_headers()['Authorization'];
 
-            $id = $_POST['id'];
-            $titulo = $_POST['titulo'];
+            if($this->validateToken($jwt)){
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id_usuario = $token->data->id;
 
-            $list = Model_Listas::find('first', array(
-                'where' => array(
-                    array('id', $id),
-                    array('id_usuario', $id_usuario)
-                )
-            ));
+                $id = $_POST['id'];
+                $titulo = $_POST['titulo'];
 
-            if($list != null){
-                $list->titulo = $titulo;
-                $list->save();
+                $list = Model_Listas::find('first', array(
+                    'where' => array(
+                        array('id', $id),
+                        array('id_usuario', $id_usuario)
+                    )
+                ));
 
-                $this->createResponse(200, 'Lista editada', ['list' => $list]);
+                if($list != null){
+                    $list->titulo = $titulo;
+                    $list->save();
+
+                    $this->createResponse(200, 'Lista editada', ['list' => $list]);
+                }else{
+                    $this->createResponse(400, 'No puedes realizar esta acción');
+                }
+
             }else{
-                $this->createResponse(400, 'No puedes realizar esta acción');
+
+                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
             }
-
-        }else{
-
-            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+        }catch (Exception $e) {
+            $this->createResponse(500, $e->getMessage());
 
         }
+        
     }
 
     function get_list(){
-        $jwt = apache_request_headers()['Authorization'];
 
-        if($this->validateToken($jwt)){
-            $id = $_GET['id'];
+        try{
+            $jwt = apache_request_headers()['Authorization'];
 
-            $list = Model_Listas::find($id);
+            if($this->validateToken($jwt)){
+                $id = $_GET['id'];
 
-            if($list != null){
+                $list = Model_Listas::find($id);
 
-                $this->createResponse(200, 'Lista devuelta', ['list' => $list]);
+                if($list != null){
+
+                    $this->createResponse(200, 'Lista devuelta', ['list' => $list]);
+
+                }else{
+
+                    $this->createResponse(500, 'Error en el servidor');
+
+                }
 
             }else{
 
-                $this->createResponse(500, 'Error en el servidor');
+                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
             }
-
-        }else{
-
-            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+        }catch (Exception $e) {
+            $this->createResponse(500, $e->getMessage());
 
         }
 

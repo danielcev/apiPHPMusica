@@ -6,7 +6,7 @@ use Firebase\JWT\JWT;
 class Controller_Users extends Controller_Rest
 {
 	private $key = 'my_secret_key';
-   protected $format = 'json';
+    protected $format = 'json';
  
    function post_create()
    {
@@ -178,7 +178,7 @@ class Controller_Users extends Controller_Rest
         }else{
             return false;
         }
-   }
+    }
 
     function validateToken($jwt){
         $token = JWT::decode($jwt, $this->key, array('HS256'));

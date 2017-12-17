@@ -50,46 +50,57 @@ class Controller_Songs extends Controller_Rest{
 	}
 
 	function post_borrar(){
-    	$jwt = apache_request_headers()['Authorization'];
+        try{
+            $jwt = apache_request_headers()['Authorization'];
 
-        if($this->validateToken($jwt)){
+            if($this->validateToken($jwt)){
 
-        	$id = $_POST['id'];
-       
-            $song = Model_Canciones::find($id);
+                $id = $_POST['id'];
+           
+                $song = Model_Canciones::find($id);
 
-            if($song != null){
-              	$song->delete();
+                if($song != null){
+                    $song->delete();
 
-              	$this->createResponse(200, 'Canción borrada correctamente', ['song' => $song]);
+                    $this->createResponse(200, 'Canción borrada correctamente', ['song' => $song]);
+                }else{
+                    $this->createResponse(400, 'La canción no existe');
+                }
+              
             }else{
-              	$this->createResponse(400, 'La canción no existe');
-            }
-          
-        }else{
 
-            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+            }
+        }catch (Exception $e) {
+            $this->createResponse(500, $e->getMessage());
 
         }
+    	
     }
 
 	function get_songs(){
 
-        $jwt = apache_request_headers()['Authorization'];
+        try{
+            $jwt = apache_request_headers()['Authorization'];
 
-        if($this->validateToken($jwt)){
-          
-            $songs = Model_Canciones::find('all');
+            if($this->validateToken($jwt)){
+              
+                $songs = Model_Canciones::find('all');
 
-            if($songs != null){
-                $this->createResponse(200, 'Canciones devueltas', ['songs' => $songs]);
+                if($songs != null){
+                    $this->createResponse(200, 'Canciones devueltas', ['songs' => $songs]);
+                }else{
+                    $this->createResponse(200, 'No hay canciones');
+                }
+
             }else{
-                $this->createResponse(200, 'No hay canciones');
+
+              $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
             }
-
-        }else{
-
-          $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+        }catch (Exception $e) {
+            $this->createResponse(500, $e->getMessage());
 
         }
 
@@ -113,7 +124,7 @@ class Controller_Songs extends Controller_Rest{
                     }else{
                         if (empty($_POST['titulo']) && empty($_POST['url_youtube']) && empty($_POST['artista']) ){
 
-                            $this->createResponse(400, 'Ningún parámetro recibido');
+                            $this->createResponse(400, 'Parámetros incorrectos');
 
                         }else{
 
