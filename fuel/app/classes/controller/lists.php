@@ -12,7 +12,7 @@ class Controller_Lists extends Controller_Rest{
    		$jwt = apache_request_headers()['Authorization'];
 
         try {
-            if (!isset($_POST['title']) || $_POST['title'] == "") 
+            if (!isset($_POST['titulo']) || $_POST['titulo'] == "") 
             {
 
                 $this->createResponse(400, 'Parámetros incorrectos');
@@ -21,12 +21,12 @@ class Controller_Lists extends Controller_Rest{
 
             if($this->validateToken($jwt)){
                 $token = JWT::decode($jwt, $this->key, array('HS256'));
-                $id_user = $token->data->id;
-                $title = $_POST['title'];
+                $id_usuario = $token->data->id;
+                $titulo = $_POST['titulo'];
 
-              if(!$this->listExists($id_user, $title)){
+              if(!$this->listExists($id_usuario, $titulo)){
 
-                  $props = array('id_usuario' => $id_user, 'titulo' => $title);
+                  $props = array('id_usuario' => $id_usuario, 'titulo' => $titulo);
 
                   $new = new Model_Listas($props);
                   $new->save();
@@ -57,11 +57,11 @@ class Controller_Lists extends Controller_Rest{
         if($this->validateToken($jwt)){
 
           $token = JWT::decode($jwt, $this->key, array('HS256'));
-          $id_user = $token->data->id;
+          $id_usuario = $token->data->id;
           
           $lists = Model_Listas::find('all', array(
     		    'where' => array(
-        		    array('id_usuario', $id_user),
+        		    array('id_usuario', $id_usuario),
     		  )));
 
           if($lists != null){
@@ -113,20 +113,20 @@ class Controller_Lists extends Controller_Rest{
 
         if($this->validateToken($jwt)){
             $token = JWT::decode($jwt, $this->key, array('HS256'));
-            $id_user = $token->data->id;
+            $id_usuario = $token->data->id;
 
             $id = $_POST['id'];
-            $title = $_POST['title'];
+            $titulo = $_POST['titulo'];
 
             $list = Model_Listas::find('first', array(
                 'where' => array(
                     array('id', $id),
-                    array('id_usuario', $id_user)
+                    array('id_usuario', $id_usuario)
                 )
             ));
 
             if($list != null){
-                $list->titulo = $title;
+                $list->titulo = $titulo;
                 $list->save();
 
                 $this->createResponse(200, 'Lista editada', ['list' => $list]);
@@ -186,12 +186,12 @@ class Controller_Lists extends Controller_Rest{
 
             if($contener == null){
                 $token = JWT::decode($jwt, $this->key, array('HS256'));
-                $id_user = $token->data->id;
+                $id_usuario = $token->data->id;
 
                 $list = Model_Listas::find('first', array(
                     'where' => array(
                         array('id', $id_lista),
-                        array('id_usuario', $id_user)
+                        array('id_usuario', $id_usuario)
                     )
                 ));
 
@@ -224,12 +224,12 @@ class Controller_Lists extends Controller_Rest{
     }
    }
 
-   function listExists($id_user, $title){
+   function listExists($id_usuario, $titulo){
 
       $lists = Model_Listas::find('all', array(
                   'where' => array(
-                      array('id_usuario', $id_user),
-                      array('titulo', $title)
+                      array('id_usuario', $id_usuario),
+                      array('titulo', $titulo)
                 )));
 
       if($lists != null){
@@ -260,8 +260,8 @@ class Controller_Lists extends Controller_Rest{
 
         $userDB = Model_Usuarios::find('all', array(
         'where' => array(
-              array('nombre', $username),
-              array('contraseña', $password)
+              array('username', $username),
+              array('password', $password)
             )
         ));
 

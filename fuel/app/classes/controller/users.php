@@ -5,34 +5,35 @@ use Firebase\JWT\JWT;
 
 class Controller_Users extends Controller_Rest
 {
-	 private $key = 'my_secret_key';
+	private $key = 'my_secret_key';
    protected $format = 'json';
  
    function post_create()
    {
 
         try {
-            if (!isset($_POST['username']) || !isset($_POST['password']) || $_POST['username'] == "" || $_POST['password'] == "") 
+            if (!isset($_POST['username']) || !isset($_POST['password']) || !isset($_POST['email']) || $_POST['username'] == "" || $_POST['password'] == "" || $_POST['email'] == "") 
             {
 
               $this->createResponse(400, 'Parámetros incorrectos');
 
             }
 
-            $nombre = $_POST['username'];
+            $username = $_POST['username'];
             $password = $_POST['password'];
+            $email = $_POST['email'];
 
-            if(!$this->userExists($nombre)){ //Si el usuario todavía no existe
-                $props = array('nombre' => $nombre, 'contraseña' => $password, 'id_rol' => 1);
+            if(!$this->userExists($username, $email)){ //Si el usuario todavía no existe
+                $props = array('username' => $username, 'password' => $password, 'email' => $email);
 
                 $new = new Model_Usuarios($props);
                 $new->save();
 
-                $this->createResponse(200, 'Usuario creado', ['nombre' => $nombre]);
+                $this->createResponse(200, 'Usuario creado', ['user' => $new]);
 
             }else{ //Si el usuario introducido ya existe
 
-                $this->createResponse(400, 'El usuario ya existe');
+                $this->createResponse(400, 'El usuario ya existe, username o email repetido');
 
             } 
 
@@ -48,13 +49,21 @@ class Controller_Users extends Controller_Rest
    function get_login()
    {
 
+    try{
+
+        if (!isset($_POST['username']) || !isset($_POST['password']) || $_POST['username'] == "" || $_POST['password'] == "") {
+
+            $this->createResponse(400, 'Parámetros incorrectos');
+
+        }
+
      	$username = $_GET['username'];
   	    $password = $_GET['password'];
 
       	$userDB = Model_Usuarios::find('first', array(
           	'where' => array(
-              	array('nombre', $username),
-              	array('contraseña', $password)
+              	array('username', $username),
+              	array('password', $password)
           	),
       	));
 
@@ -81,123 +90,86 @@ class Controller_Users extends Controller_Rest
 
       	}
 
-   }
+    }catch (Exception $e){
+        $this->createResponse(500, $e->getMessage());
 
-   function get_userToken(){
-
-        $jwt = apache_request_headers()['Authorization'];
-
-        if($jwt != ""){
-            if($this->validateToken($jwt)){
-                $token = JWT::decode($jwt, $this->key , array('HS256'));
-
-                $this->createResponse(200, 'Usuario devuelto', $token->data);
-            }else{
-                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
-            }
-        }else{
-          $this->createResponse(400, 'No tienes permiso para realizar esta acción');
-        }
-   }
-
-   function get_user(){
-        $jwt = apache_request_headers()['Authorization'];
-
-        if($this->validateToken($jwt)){
-            $id = $_GET['id'];
-
-            $userDB = Model_Usuarios::find($id);
-
-            if($userDB != null){
-
-                $this->createResponse(200, 'Usuario devuelto', ['user' => $userDB]);
-
-            }else{
-
-                $this->createResponse(500, 'Error en el servidor');
-
-            }
-
-        }else{
-
-            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
-
-        }
-
-   }
-
-    function get_users(){
-
-        $jwt = apache_request_headers()['Authorization'];
-
-        if($this->validateToken($jwt)){
-            $usersDB = Model_Usuarios::find('all');
-
-            $this->createResponse(200, 'Usuarios devueltos', ['users' => $usersDB]);
-
-        }else{
-
-            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
-
-        }
-
-    }
+    }  
+}
 
     function post_borrar(){
 
-        $jwt = apache_request_headers()['Authorization'];
+        try{
+            $jwt = apache_request_headers()['Authorization'];
 
-        if($this->validateToken($jwt)){
-            $id = $_POST['id'];
-       
-            $usuario = Model_Usuarios::find($id);
+            if($this->validateToken($jwt)){
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id = $token->data->id;
+           
+                $usuario = Model_Usuarios::find($id);
 
-            if($usuario != null){
-                $usuario->delete();
+                if($usuario != null){
+                    $usuario->delete();
 
-                $this->createResponse(200, 'Usuario borrado', ['usuario' => $usuario]);
+                    $this->createResponse(200, 'Usuario borrado', ['usuario' => $usuario]);
+                }else{
+                    $this->createResponse(400, 'El usuario introducido no existe');
+                }
+              
             }else{
-                $this->createResponse(400, 'El usuario introducido no existe');
-            }
-          
-        }else{
-            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
-        }
+            }
+
+        }catch (Exception $e){
+
+            $this->createResponse(500, $e->getMessage());
+
+        }  
       
     }
 
     function post_edit(){
-        $jwt = apache_request_headers()['Authorization'];
 
-        if($this->validateToken($jwt)){
-            $id = $_POST['id'];
-            $username = $_POST['username'];
-            $password = $_POST['password'];
-       
-            $usuario = Model_Usuarios::find($id);
+        try{
+            $jwt = apache_request_headers()['Authorization'];
 
-            if($usuario != null){
-                $usuario->nombre = $username;
-                $usuario->contraseña = $password;
-                $usuario->save();
-                $this->createResponse(200, 'Usuario editado', ['usuario' => $usuario]);
+            if($this->validateToken($jwt)){
+                $newPassword = $_POST['password'];
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+
+                $id = $token->data->id;
+           
+                $usuario = Model_Usuarios::find($id);
+
+                if($usuario != null){
+                    $usuario->password = $newPassword;
+                    $usuario->save();
+                    $this->createResponse(200, 'Usuario editado', ['user' => $usuario]);
+                }else{
+                    $this->createResponse(400, 'El usuario no existe');
+                }
+                
             }else{
-                $this->createResponse(400, 'El usuario introducido no existe');
+
+                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
             }
-            
-        }else{
+        }catch (Exception $e){
 
-            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+            $this->createResponse(500, $e->getMessage());
 
-        }
+        } 
+        
     }
 
-    function userExists($username){
+    function userExists($username, $email){
 
-        $userDB = Model_Usuarios::find('first', array(
+        $userDB = Model_Usuarios::find('all', array(
                     'where' => array(
-                        array('nombre', $username)
+                        array('username', $username),
+                        'or' => array(
+                          array('email', $email),
+                        ),
                     )
                 )); 
 
@@ -216,8 +188,8 @@ class Controller_Users extends Controller_Rest
 
         $userDB = Model_Usuarios::find('all', array(
         'where' => array(
-            array('nombre', $username),
-            array('contraseña', $password)
+            array('username', $username),
+            array('password', $password)
             )
         ));
 

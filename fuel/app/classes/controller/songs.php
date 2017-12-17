@@ -11,7 +11,7 @@ class Controller_Songs extends Controller_Rest{
 		$jwt = apache_request_headers()['Authorization'];
 
         try {
-            if (!isset($_POST['title']) || $_POST['url_youtube'] == "") 
+            if (!isset($_POST['titulo']) || $_POST['titulo'] == "" || $_POST['url_youtube'] == "" || !isset($_POST['url_youtube']) || $_POST['artista'] == "" || !isset($_POST['artista'])) 
             {
 
                 $this->createResponse(400, 'Parámetros incorrectos');
@@ -20,12 +20,13 @@ class Controller_Songs extends Controller_Rest{
 
             if($this->validateToken($jwt)){
 
-	            	$title = $_POST['title'];
+	            	$titulo = $_POST['titulo'];
 	            	$url_youtube = $_POST['url_youtube'];
+                    $artista = $_POST['artista'];
 
-	            if(!$this->songExists($title, $url_youtube)){
+	            if(!$this->songExists($url_youtube)){
 
-	                $props = array('titulo' => $title, 'url_youtube' => $url_youtube);
+	                $props = array('titulo' => $titulo, 'url_youtube' => $url_youtube, 'artista' => $artista);
 
 	                $new = new Model_Canciones($props);
 	                $new->save();
@@ -94,6 +95,61 @@ class Controller_Songs extends Controller_Rest{
 
     }
 
+    function post_edit(){
+
+        try{
+            $jwt = apache_request_headers()['Authorization'];
+
+            if($this->validateToken($jwt)){
+
+                if(!isset($_POST['id'])){
+                    $this->createResponse(400, 'Es necesario el parámetro id');
+                }else{
+                    $id = $_POST['id'];
+                    $song = Model_Canciones::find($id);
+
+                    if($song == null){
+                        $this->createResponse(400, 'id incorrecto, la canción no existe');
+                    }else{
+                        if (empty($_POST['titulo']) && empty($_POST['url_youtube']) && empty($_POST['artista']) ){
+
+                            $this->createResponse(400, 'Ningún parámetro recibido');
+
+                        }else{
+
+                            if (!empty($_POST['titulo'])){
+                                $song->titulo = $_POST['titulo'];  
+                            }
+
+                            if (!empty($_POST['url_youtube'])){
+                                $song->url_youtube = $_POST['url_youtube'];
+                            }
+
+                            if (!empty($_POST['artista'])){
+                                $song->artista = $_POST['artista'];
+                            }
+
+                            $song->save();
+
+                            $this->createResponse(200, 'Canción modificada',['song' => $song]);
+                        }
+
+                    }
+ 
+                }
+   
+            }else{
+
+              $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+            }
+        }catch (Exception $e) {
+            $this->createResponse(500, $e->getMessage());
+
+        } 
+        
+    }
+
 	function createResponse($code, $message, $data = []){
 
         $json = $this->response(array(
@@ -106,11 +162,10 @@ class Controller_Songs extends Controller_Rest{
 
     }
 
-    function songExists($title, $url_youtube){
+    function songExists($url_youtube){
 
         $songs = Model_Canciones::find('all', array(
                   'where' => array(
-                      array('titulo', $title),
                       array('url_youtube', $url_youtube)
                 )));
 
@@ -130,8 +185,8 @@ class Controller_Songs extends Controller_Rest{
 
         $userDB = Model_Usuarios::find('all', array(
         'where' => array(
-              array('nombre', $username),
-              array('contraseña', $password)
+              array('username', $username),
+              array('password', $password)
             )
         ));
 

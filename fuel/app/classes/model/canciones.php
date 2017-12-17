@@ -7,6 +7,7 @@ class Model_Canciones extends Orm\Model
 	protected static $_properties = array(
 	      'id',
 	      'titulo',
+	      'artista',
 	      'url_youtube'
 	   );
 
