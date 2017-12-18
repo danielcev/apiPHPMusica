@@ -100,14 +100,14 @@ class Controller_Lists extends Controller_Rest{
                     )
                 ));
 
-            if ($list != null){
-                $list->delete();
+                if ($list != null){
+                    $list->delete();
 
-                $this->createResponse(200, 'Lista borrada correctamente', ['list' => $list]);
-            }else{
+                    $this->createResponse(200, 'Lista borrada correctamente', ['list' => $list]);
+                }else{
 
-                $this->createResponse(400, 'No puedes realizar esta acción');
-            }
+                    $this->createResponse(400, 'No puedes realizar esta acción');
+                }
               
             }else{
 
@@ -160,38 +160,6 @@ class Controller_Lists extends Controller_Rest{
         }
         
     }
-
-    function get_list(){
-
-        try{
-            $jwt = apache_request_headers()['Authorization'];
-
-            if($this->validateToken($jwt)){
-                $id = $_GET['id'];
-
-                $list = Model_Listas::find($id);
-
-                if($list != null){
-
-                    $this->createResponse(200, 'Lista devuelta', ['list' => $list]);
-
-                }else{
-
-                    $this->createResponse(500, 'Error en el servidor');
-
-                }
-
-            }else{
-
-                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
-
-            }
-        }catch (Exception $e) {
-            $this->createResponse(500, $e->getMessage());
-
-        }
-
-   }
 
    function post_addSong(){
 

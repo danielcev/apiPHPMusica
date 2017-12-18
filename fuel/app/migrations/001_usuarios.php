@@ -11,8 +11,7 @@ class Usuarios
             'username' => array('type' => 'varchar', 'constraint' => 100, 'null' => false),
             'password' => array('type' => 'varchar', 'constraint' => 100, 'null' => false),
             'email' => array('type' => 'int', 'constraint' => 5, 'null' => false)
-        ), array('id')
-            );
+        ), array('id'));
 
         //Adding UNIQUE constraint to 'username' column
         \DB::query("ALTER TABLE `usuarios` ADD UNIQUE (`username`)")->execute();
