@@ -11,36 +11,37 @@ class Controller_Lists extends Controller_Rest{
    	{
    		
         try {
+
             $jwt = apache_request_headers()['Authorization'];
 
-            if (!isset($_POST['titulo']) || $_POST['titulo'] == "") 
+            if (empty($_POST['titulo'])) 
             {
 
                 $this->createResponse(400, 'Parámetros incorrectos');
 
-            }
-
-            if($this->validateToken($jwt)){
-                $token = JWT::decode($jwt, $this->key, array('HS256'));
-                $id_usuario = $token->data->id;
-                $titulo = $_POST['titulo'];
-
-              if(!$this->listExists($id_usuario, $titulo)){
-
-                  $props = array('id_usuario' => $id_usuario, 'titulo' => $titulo);
-
-                  $new = new Model_Listas($props);
-                  $new->save();
-
-                  $this->createResponse(200, 'Lista creada', ['list' => $new]);
-
-              }else{
-                  $this->createResponse(400, 'Lista ya creada por este usuario');
-              }
-
             }else{
+                if($this->validateToken($jwt)){
+                    $token = JWT::decode($jwt, $this->key, array('HS256'));
+                    $id_usuario = $token->data->id;
+                    $titulo = $_POST['titulo'];
+
+                    if(!$this->listExists($id_usuario, $titulo)){
+
+                        $props = array('id_usuario' => $id_usuario, 'titulo' => $titulo);
+
+                        $new = new Model_Listas($props);
+                        $new->save();
+
+                        $this->createResponse(200, 'Lista creada', ['list' => $new]);
+
+                    }else{
+                        $this->createResponse(400, 'Lista ya creada por este usuario');
+                    }
+
+                }else{
                   $this->createResponse(400, 'El token no es válido');
-            }
+                }
+            }   
 	  
         }
         catch (Exception $e) 
