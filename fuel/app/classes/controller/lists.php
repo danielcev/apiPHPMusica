@@ -164,59 +164,59 @@ class Controller_Lists extends Controller_Rest{
 
    function post_addSong(){
 
-    try{
+        try{
 
-        $jwt = apache_request_headers()['Authorization'];
+            $jwt = apache_request_headers()['Authorization'];
 
-        if($this->validateToken($jwt)){
-            $id_cancion = $_POST['id_cancion'];
-            $id_lista = $_POST['id_lista'];
+            if($this->validateToken($jwt)){
+                $id_cancion = $_POST['id_cancion'];
+                $id_lista = $_POST['id_lista'];
 
-            $contener = Model_Contener::find('first', array(
-                'where' => array(
-                    array('id_lista', $id_lista),
-                    array('id_cancion', $id_cancion)
-                )
-            ));
-
-            if($contener == null){
-                $token = JWT::decode($jwt, $this->key, array('HS256'));
-                $id_usuario = $token->data->id;
-
-                $list = Model_Listas::find('first', array(
+                $contener = Model_Contener::find('first', array(
                     'where' => array(
-                        array('id', $id_lista),
-                        array('id_usuario', $id_usuario)
+                        array('id_lista', $id_lista),
+                        array('id_cancion', $id_cancion)
                     )
                 ));
 
-                if($list != null){
+                if($contener == null){
+                    $token = JWT::decode($jwt, $this->key, array('HS256'));
+                    $id_usuario = $token->data->id;
 
-                    $props = array('id_cancion' => $id_cancion, 'id_lista' => $id_lista);
+                    $list = Model_Listas::find('first', array(
+                        'where' => array(
+                            array('id', $id_lista),
+                            array('id_usuario', $id_usuario)
+                        )
+                    ));
 
-                    $new = new Model_Contener($props);
-                    $new->save();
+                    if($list != null){
 
-                    $this->createResponse(200, 'Canción añadida a la lista', ['list' => $list]);
-                    
+                        $props = array('id_cancion' => $id_cancion, 'id_lista' => $id_lista);
+
+                        $new = new Model_Contener($props);
+                        $new->save();
+
+                        $this->createResponse(200, 'Canción añadida a la lista', ['list' => $list]);
+                        
+                    }else{
+
+                        $this->createResponse(400, 'No tienes permiso para añadir canciones a esa lista');
+
+                    }
                 }else{
-
-                    $this->createResponse(400, 'No tienes permiso para añadir canciones a esa lista');
-
+                     $this->createResponse(400, 'La canción ya pertenece a la lista');
                 }
-           }else{
-                 $this->createResponse(400, 'La canción ya pertenece a la lista');
+
+            }else{
+
+                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
             }
 
-        }else{
-
-            $this->createResponse(400, 'No tienes permiso para realizar esta acción');
-
+        }catch(Exception $e){
+            $this->createResponse(500, $e->getMessage());
         }
-
-    }catch(Exception $e){
-        $this->createResponse(500, $e->getMessage());
-    }
    }
 
    function listExists($id_usuario, $titulo){
