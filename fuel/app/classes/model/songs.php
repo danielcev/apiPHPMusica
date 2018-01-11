@@ -1,14 +1,15 @@
 <?php
 
-class Model_Canciones extends Orm\Model
+class Model_Songs extends Orm\Model
 {
 
-   	protected static $_table_name = 'canciones'; 
+   	protected static $_table_name = 'songs'; 
 	protected static $_properties = array(
 	      'id',
-	      'titulo',
-	      'artista',
-	      'url_youtube'
+	      'title',
+	      'artist',
+	      'url_youtube',
+	      'reproductions'
 	   );
 
 	protected static $_many_many = array(

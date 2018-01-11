@@ -1,13 +1,14 @@
 <?php
 
-class Model_Listas extends Orm\Model
+class Model_Lists extends Orm\Model
 {
 
-   	protected static $_table_name = 'listas'; 
+   	protected static $_table_name = 'lists'; 
 	protected static $_properties = array(
 	      'id',
-	      'titulo',
-	      'id_usuario'
+	      'title',
+	      'editable',
+	      'id_user'
 	   );
 
 	protected static $_many_many = array(

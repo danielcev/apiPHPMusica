@@ -1,10 +1,11 @@
 <?php
 
-class Model_Usuarios extends Orm\Model
+class Model_Users extends Orm\Model
 {
 
-   	protected static $_table_name = 'usuarios';
-	protected static $_properties = array('id','username','password','email');
+   	protected static $_table_name = 'users';
+	protected static $_properties = array('id','username','password','email','id_device'
+        ,'photo','x','y','birthday','city','description','id_rol','id_privacity');
 
 	protected static $_has_many = array(
         'listas' => array(

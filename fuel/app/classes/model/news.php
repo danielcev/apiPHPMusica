@@ -1,10 +1,10 @@
 <?php
 
-class Model_Noticias extends Orm\Model
+class Model_News extends Orm\Model
 {
 
-   	protected static $_table_name = 'noticias'; 
-	protected static $_properties = array('id','descripcion', 'id_usuario'
+   	protected static $_table_name = 'news'; 
+	protected static $_properties = array('id','title','description', 'id_user'
 	   );
 
 	protected static $_belongs_to = array(
