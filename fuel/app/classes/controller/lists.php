@@ -29,7 +29,7 @@ class Controller_Lists extends Controller_Rest{
 
                         $props = array('id_usuario' => $id_usuario, 'titulo' => $titulo);
 
-                        $new = new Model_Listas($props);
+                        $new = new Model_Lists($props);
                         $new->save();
 
                         $this->createResponse(200, 'Lista creada', ['list' => $new]);
@@ -62,7 +62,7 @@ class Controller_Lists extends Controller_Rest{
               $token = JWT::decode($jwt, $this->key, array('HS256'));
               $id_usuario = $token->data->id;
               
-              $lists = Model_Listas::find('all', array(
+              $lists = Model_Lists::find('all', array(
                     'where' => array(
                         array('id_usuario', $id_usuario),
                   )));
@@ -94,7 +94,7 @@ class Controller_Lists extends Controller_Rest{
                 $token = JWT::decode($jwt, $this->key, array('HS256'));
                 $id = $_POST['id'];
            
-                $list = Model_Listas::find('first', array(
+                $list = Model_Lists::find('first', array(
                     'where' => array(
                         array('id', $id),
                         array('id_usuario', $token->data->id)
@@ -134,7 +134,7 @@ class Controller_Lists extends Controller_Rest{
                 $id = $_POST['id'];
                 $titulo = $_POST['titulo'];
 
-                $list = Model_Listas::find('first', array(
+                $list = Model_Lists::find('first', array(
                     'where' => array(
                         array('id', $id),
                         array('id_usuario', $id_usuario)
@@ -172,7 +172,7 @@ class Controller_Lists extends Controller_Rest{
                 $id_cancion = $_POST['id_cancion'];
                 $id_lista = $_POST['id_lista'];
 
-                $contener = Model_Contener::find('first', array(
+                $contener = Model_Contain::find('first', array(
                     'where' => array(
                         array('id_lista', $id_lista),
                         array('id_cancion', $id_cancion)
@@ -183,7 +183,7 @@ class Controller_Lists extends Controller_Rest{
                     $token = JWT::decode($jwt, $this->key, array('HS256'));
                     $id_usuario = $token->data->id;
 
-                    $list = Model_Listas::find('first', array(
+                    $list = Model_Lists::find('first', array(
                         'where' => array(
                             array('id', $id_lista),
                             array('id_usuario', $id_usuario)
@@ -194,7 +194,7 @@ class Controller_Lists extends Controller_Rest{
 
                         $props = array('id_cancion' => $id_cancion, 'id_lista' => $id_lista);
 
-                        $new = new Model_Contener($props);
+                        $new = new Model_Contain($props);
                         $new->save();
 
                         $this->createResponse(200, 'Canción añadida a la lista', ['list' => $list]);
@@ -221,7 +221,7 @@ class Controller_Lists extends Controller_Rest{
 
    function listExists($id_usuario, $titulo){
 
-      $lists = Model_Listas::find('all', array(
+      $lists = Model_Lists::find('all', array(
                   'where' => array(
                       array('id_usuario', $id_usuario),
                       array('titulo', $titulo)

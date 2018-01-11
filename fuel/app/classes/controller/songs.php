@@ -28,7 +28,7 @@ class Controller_Songs extends Controller_Rest{
 
 	                $props = array('titulo' => $titulo, 'url_youtube' => $url_youtube, 'artista' => $artista);
 
-	                $new = new Model_Canciones($props);
+	                $new = new Model_Songs($props);
 	                $new->save();
 
 	                $this->createResponse(200, 'Canción creada', ['song' => $new]);
@@ -57,7 +57,7 @@ class Controller_Songs extends Controller_Rest{
 
                 $id = $_POST['id'];
            
-                $song = Model_Canciones::find($id);
+                $song = Model_Songs::find($id);
 
                 if($song != null){
                     $song->delete();
@@ -86,7 +86,7 @@ class Controller_Songs extends Controller_Rest{
 
             if($this->validateToken($jwt)){
               
-                $songs = Model_Canciones::find('all');
+                $songs = Model_Songs::find('all');
 
                 if($songs != null){
                     $this->createResponse(200, 'Canciones devueltas', ['songs' => $songs]);
@@ -117,7 +117,7 @@ class Controller_Songs extends Controller_Rest{
                     $this->createResponse(400, 'Es necesario el parámetro id');
                 }else{
                     $id = $_POST['id'];
-                    $song = Model_Canciones::find($id);
+                    $song = Model_Songs::find($id);
 
                     if($song == null){
                         $this->createResponse(400, 'id incorrecto, la canción no existe');
@@ -175,7 +175,7 @@ class Controller_Songs extends Controller_Rest{
 
     function songExists($url_youtube){
 
-        $songs = Model_Canciones::find('all', array(
+        $songs = Model_Songs::find('all', array(
                   'where' => array(
                       array('url_youtube', $url_youtube)
                 )));
@@ -194,7 +194,7 @@ class Controller_Songs extends Controller_Rest{
         $username = $token->data->username;
         $password = $token->data->password;
 
-        $userDB = Model_Usuarios::find('all', array(
+        $userDB = Model_Users::find('all', array(
         'where' => array(
               array('username', $username),
               array('password', $password)

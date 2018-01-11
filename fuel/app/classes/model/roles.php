@@ -8,9 +8,9 @@ class Model_Roles extends Orm\Model
 	   );
 
 	protected static $_has_many = array(
-    'usuarios' => array(
+    'users' => array(
         'key_from' => 'id',
-        'model_to' => 'Model_Usuarios',
+        'model_to' => 'Model_Users',
         'key_to' => 'id_rol',
         'cascade_save' => true,
         'cascade_delete' => false,

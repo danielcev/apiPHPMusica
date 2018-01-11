@@ -13,6 +13,10 @@ class Roles
 
         //Adding UNIQUE constraint to 'type' column
         \DB::query("ALTER TABLE `roles` ADD UNIQUE (`type`)")->execute();
+
+        //Adding admin and user roles registers
+        \DB::query("INSERT INTO roles (type) VALUES('admin')")->execute();
+        \DB::query("INSERT INTO roles (type) VALUES('user')")->execute();
     }
 
 

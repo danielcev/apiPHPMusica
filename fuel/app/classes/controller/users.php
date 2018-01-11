@@ -24,9 +24,9 @@ class Controller_Users extends Controller_Rest
             $email = $_POST['email'];
 
             if(!$this->userExists($username, $email)){ //Si el usuario todavía no existe
-                $props = array('username' => $username, 'password' => $password, 'email' => $email);
+                $props = array('username' => $username, 'password' => $password, 'email' => $email, 'id_rol' => 2);
 
-                $new = new Model_Usuarios($props);
+                $new = new Model_Users($props);
                 $new->save();
 
                 $this->createResponse(200, 'Usuario creado', ['user' => $new]);
@@ -60,7 +60,7 @@ class Controller_Users extends Controller_Rest
      	$username = $_GET['username'];
   	    $password = $_GET['password'];
 
-      	$userDB = Model_Usuarios::find('first', array(
+      	$userDB = Model_Users::find('first', array(
           	'where' => array(
               	array('username', $username),
               	array('password', $password)
@@ -105,7 +105,7 @@ class Controller_Users extends Controller_Rest
                 $token = JWT::decode($jwt, $this->key, array('HS256'));
                 $id = $token->data->id;
            
-                $usuario = Model_Usuarios::find($id);
+                $usuario = Model_Users::find($id);
 
                 if($usuario != null){
                     $usuario->delete();
@@ -139,7 +139,7 @@ class Controller_Users extends Controller_Rest
 
                 $id = $token->data->id;
            
-                $usuario = Model_Usuarios::find($id);
+                $usuario = Model_Users::find($id);
 
                 if($usuario != null){
                     $usuario->password = $newPassword;
@@ -164,7 +164,7 @@ class Controller_Users extends Controller_Rest
 
     function userExists($username, $email){
 
-        $userDB = Model_Usuarios::find('all', array(
+        $userDB = Model_Users::find('all', array(
                     'where' => array(
                         array('username', $username),
                         'or' => array(
@@ -186,7 +186,7 @@ class Controller_Users extends Controller_Rest
         $username = $token->data->username;
         $password = $token->data->password;
 
-        $userDB = Model_Usuarios::find('all', array(
+        $userDB = Model_Users::find('all', array(
         'where' => array(
             array('username', $username),
             array('password', $password)

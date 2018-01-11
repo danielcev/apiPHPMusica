@@ -8,9 +8,9 @@ class Model_News extends Orm\Model
 	   );
 
 	protected static $_belongs_to = array(
-    'usuarios' => array(
-        'key_from' => 'id_usuario',
-        'model_to' => 'Model_Usuarios',
+    'users' => array(
+        'key_from' => 'id_user',
+        'model_to' => 'Model_Users',
         'key_to' => 'id',
         'cascade_save' => true,
         'cascade_delete' => true,

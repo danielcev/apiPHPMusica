@@ -8,10 +8,10 @@ class Model_Users extends Orm\Model
         ,'photo','x','y','birthday','city','description','id_rol','id_privacity');
 
 	protected static $_has_many = array(
-        'listas' => array(
+        'lists' => array(
             'key_from' => 'id',
-            'model_to' => 'Model_Listas',
-            'key_to' => 'id_usuario',
+            'model_to' => 'Model_Lists',
+            'key_to' => 'id_user',
             'cascade_save' => true,
             'cascade_delete' => true,
         )
