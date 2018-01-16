@@ -6,210 +6,668 @@ use Firebase\JWT\JWT;
 class Controller_Users extends Controller_Rest
 {
 	private $key = 'my_secret_key';
-    protected $format = 'json';
+	protected $format = 'json';
  
-   function post_create()
-   {
+	function post_create(){
 
-        try {
-            if (!isset($_POST['username']) || !isset($_POST['password']) || !isset($_POST['email']) || $_POST['username'] == "" || $_POST['password'] == "" || $_POST['email'] == "") 
-            {
+		try {
 
-              $this->createResponse(400, 'Parámetros incorrectos');
+			if (!isset($_POST['username']) || !isset($_POST['password']) || !isset($_POST['email']) || $_POST['username'] == "" || $_POST['password'] == "" || $_POST['email'] == "") {
 
-            }
+				return $this->createResponse(400, 'Faltan parámetros (username y/o password y/o email)');
 
-            $username = $_POST['username'];
-            $password = $_POST['password'];
-            $email = $_POST['email'];
+			}
 
-            if(!$this->userExists($username, $email)){ //Si el usuario todavía no existe
-                $props = array('username' => $username, 'password' => $password, 'email' => $email, 'id_rol' => 2);
+			$username = $_POST['username'];
+			$password = $_POST['password'];
+			$email = $_POST['email'];
 
-                $new = new Model_Users($props);
-                $new->save();
+			if(!$this->userExists($username, $email)){ //Si el usuario todavía no existe
 
-                $this->createResponse(200, 'Usuario creado', ['user' => $new]);
+				//Creamos privacidad para el nuevo usuario
+				$newPrivacity = new Model_Privacity(array('profile' => false, 'friends' => false,'lists' =>  false,'notifications' => false,'localization' => false));
+				$newPrivacity->save();
 
-            }else{ //Si el usuario introducido ya existe
+				$props = array('username' => $username, 'password' => $password, 'email' => $email, 'id_rol' => 2, 'id_privacity' => $newPrivacity->id);
 
-                $this->createResponse(400, 'El usuario ya existe, username o email repetido');
+				$newUser = new Model_Users($props);
+				$newUser->save();
 
-            } 
+				return $this->createResponse(200, 'Usuario creado', ['user' => $newUser]);
 
-       }
-        catch (Exception $e) 
-        {
-            $this->createResponse(500, $e->getMessage());
+			}else{ //Si el usuario introducido ya existe
 
-        }      
-        
-   }
+				return $this->createResponse(400, 'El usuario ya existe, username o email repetido');
 
-   function get_login()
-   {
+			} 
 
-    try{
+		}catch (Exception $e) {
+			
+			return $this->createResponse(500, $e->getMessage());
 
-        if (!isset($_POST['username']) || !isset($_POST['password']) || $_POST['username'] == "" || $_POST['password'] == "") {
+		}      
+				
+	}
 
-            $this->createResponse(400, 'Parámetros incorrectos');
+	function get_login(){
 
-        }
+		try{
 
-     	$username = $_GET['username'];
-  	    $password = $_GET['password'];
+			if (!isset($_GET['username']) || !isset($_GET['password']) || $_GET['username'] == "" || $_GET['password'] == "") {
 
-      	$userDB = Model_Users::find('first', array(
-          	'where' => array(
-              	array('username', $username),
-              	array('password', $password)
-          	),
-      	));
+				return $this->createResponse(400, 'Faltan parámetros (username y/o password)');
 
-      	if($userDB != null){ //Si el usuario se ha logueado (existe en la BD)
+			}
 
-      		//Creación de token
-      		$time = time();
-      		$token = array(
-      		    'iat' => $time, 
-      		    'data' => [ 
-                    'id' => $userDB['id'],
-      		        'username' => $username,
-      		        'password' => $password
-      		    ]
-      		);
+			$username = $_GET['username'];
+			$password = $_GET['password'];
 
-      		$jwt = JWT::encode($token, $this->key);
+			$userDB = Model_Users::find('first', array(
+					'where' => array(
+							array('username', $username),
+							array('password', $password)
+					)
+			));
 
-            $this->createResponse(200, 'login correcto', ['token' => $jwt, 'username' => $username]);
+			if($userDB != null){ //Si el usuario se ha logueado (existe en la BD)
 
-      	}else{
+				//Creación de token
+				$time = time();
+				$token = array(
+						'iat' => $time, 
+						'data' => [ 
+							'id' => $userDB['id'],
+							'username' => $username,
+							'password' => $password
+						]
+				);
 
-            $this->createResponse(400, 'El usuario no existe');
+				$jwt = JWT::encode($token, $this->key);
 
-      	}
+				return $this->createResponse(200, 'login correcto', ['token' => $jwt, 'username' => $username]);
 
-    }catch (Exception $e){
-        $this->createResponse(500, $e->getMessage());
+			}else{
 
-    }  
-}
+				return $this->createResponse(400, 'El usuario no existe');
 
-    function post_borrar(){
+			}
 
-        try{
-            $jwt = apache_request_headers()['Authorization'];
+		}catch (Exception $e){
+			
+			return $this->createResponse(500, $e->getMessage());
 
-            if($this->validateToken($jwt)){
-                $token = JWT::decode($jwt, $this->key, array('HS256'));
-                $id = $token->data->id;
-           
-                $usuario = Model_Users::find($id);
+		}  
+	}
 
-                if($usuario != null){
-                    $usuario->delete();
+	function post_login(){
 
-                    $this->createResponse(200, 'Usuario borrado', ['usuario' => $usuario]);
-                }else{
-                    $this->createResponse(400, 'El usuario introducido no existe');
-                }
-              
-            }else{
-                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+		try{
 
-            }
+			if (!isset($_POST['username']) || 
+				!isset($_POST['password']) ||
+				!isset($_POST['id_device']) || 
+				!isset($_POST['x']) || 
+				!isset($_POST['y']) ||  
+				$_POST['username'] == "" || 
+				$_POST['password'] == "" ||
+				$_POST['id_device'] == "" ||
+				$_POST['x'] == "" ||
+				$_POST['y'] == ""
+				) {
 
-        }catch (Exception $e){
+				return $this->createResponse(400, 'Faltan parámetros (username y/o password y/o id_device y/o x y/o y)');
 
-            $this->createResponse(500, $e->getMessage());
+			}
 
-        }  
-      
-    }
+			$username = $_POST['username'];
+			$password = $_POST['password'];
+			$id_device = $_POST['id_device'];
+			$x = $_POST['x'];
+			$y = $_POST['y'];
 
-    function post_edit(){
+			$userDB = Model_Users::find('first', array(
+					'where' => array(
+							array('username', $username),
+							array('password', $password)
+					)
+			));
 
-        try{
-            $jwt = apache_request_headers()['Authorization'];
+			if($userDB != null){ //Si el usuario se ha logueado (existe en la BD)
 
-            if($this->validateToken($jwt)){
-                $newPassword = $_POST['password'];
-                $token = JWT::decode($jwt, $this->key, array('HS256'));
+				$userDB->id_device = $id_device;
+				$userDB->x = $x;
+				$userDB->y = $y;
 
-                $id = $token->data->id;
-           
-                $usuario = Model_Users::find($id);
+				$userDB->save();
 
-                if($usuario != null){
-                    $usuario->password = $newPassword;
-                    $usuario->save();
-                    $this->createResponse(200, 'Usuario editado', ['user' => $usuario]);
-                }else{
-                    $this->createResponse(400, 'El usuario no existe');
-                }
-                
-            }else{
+				//Creación de token
+				$time = time();
+				$token = array(
+						'iat' => $time, 
+						'data' => [ 
+							'id' => $userDB['id'],
+							'username' => $username,
+							'password' => $password
+						]
+				);
 
-                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+				$jwt = JWT::encode($token, $this->key);
 
-            }
-        }catch (Exception $e){
+				return $this->createResponse(200, 'Usuario logueado', ['token' => $jwt, 'username' => $username]);
 
-            $this->createResponse(500, $e->getMessage());
+			}else{
 
-        } 
-        
-    }
+				return $this->createResponse(400, 'El usuario no existe');
 
-    function userExists($username, $email){
+			}
 
-        $userDB = Model_Users::find('all', array(
-                    'where' => array(
-                        array('username', $username),
-                        'or' => array(
-                          array('email', $email),
-                        ),
-                    )
-                )); 
+		}catch (Exception $e){
+			
+			return $this->createResponse(500, $e->getMessage());
 
-        if($userDB != null){
-            return true;
-        }else{
-            return false;
-        }
-    }
+		}  
+	}
 
-    function validateToken($jwt){
-        $token = JWT::decode($jwt, $this->key, array('HS256'));
+	function get_comprobateemail(){
 
-        $username = $token->data->username;
-        $password = $token->data->password;
+		try{
 
-        $userDB = Model_Users::find('all', array(
-        'where' => array(
-            array('username', $username),
-            array('password', $password)
-            )
-        ));
+			if(!isset($_GET["email"]) || $_GET["email"] == ""){
+				
+				return $this->createResponse(400, 'Falta parámetro email');
 
-        if($userDB != null){
-            return true;
-        }else{
-            return false;
-        }
-    }
+			}
 
-    function createResponse($code, $message, $data = []){
+			$email = $_GET["email"];
 
-        $json = $this->response(array(
-              'code' => $code,
-              'message' => $message,
-              'data' => $data
-            ));
+			$userDB = Model_Users::find('first', array(
+					'where' => array(
+							array('email', $email)
+					)
+			));
 
-        return $json;
+			if($userDB != null){
+				return $this->createResponse(200, 'El email existe', ['id_user' => $userDB->id]);
+			}else{
+				return $this->createResponse(400, 'El email no existe');
+			}
 
-    }
+
+		}catch(Exception $e){
+
+			return $this->createResponse(500, $e->getMessage());
+
+		}
+
+	}
+
+	function post_borrar(){
+
+		try{
+			$jwt = apache_request_headers()['Authorization'];
+
+			if($this->validateToken($jwt)){
+				$token = JWT::decode($jwt, $this->key, array('HS256'));
+				$id = $token->data->id;
+	 
+				$usuario = Model_Users::find($id);
+
+				if($usuario != null){
+					$usuario->delete();
+
+					return $this->createResponse(200, 'Usuario borrado', ['usuario' => $usuario]);
+				}else{
+					return $this->createResponse(400, 'El usuario introducido no existe');
+				}
+				
+			}else{
+				
+				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+			}
+
+		}catch (Exception $e){
+
+			return $this->createResponse(500, $e->getMessage());
+
+		}  
+		
+	}
+
+	function post_edit(){
+
+		try{
+
+			if(!isset(apache_request_headers()['Authorization']) || apache_request_headers()['Authorization'] == ""){
+				return $this->createResponse(400, 'Falta el token en el header');
+			}
+
+			$jwt = apache_request_headers()['Authorization'];
+
+			if($this->validateToken($jwt)){
+
+				if((!isset($_POST["password"]) || $_POST["password"] == "") &&
+					(!isset($_POST["photo"]) || $_POST["photo"] == "") &&
+					(!isset($_POST["description"]) || $_POST["description"] == "") &&
+					(!isset($_POST["birthday"]) || $_POST["bithday"] == "") &&
+					(!isset($_POST["city"]) || $_POST["city"] == "")){
+					return $this->createResponse(400, 'Faltan parámetros, es necesario al menos uno (password o foto o description o birthday o city)');
+				}
+
+				$token = JWT::decode($jwt, $this->key, array('HS256'));
+
+				$id = $token->data->id;
+	 
+				$usuario = Model_Users::find($id);
+
+				if($usuario != null){
+
+					if(isset($_POST["password"]) && $_POST["password"] != ""){
+						$password = $_POST["password"];
+
+						$usuario->password = $password;
+					}
+
+					if(isset($_POST["photo"]) && $_POST["photo"] != ""){
+						$photo = $_POST["photo"];
+
+						$usuario->photo = $photo;
+					}
+
+					if(isset($_POST["description"]) && $_POST["description"] != ""){
+						$description = $_POST["description"];
+
+						$usuario->description = $description;
+					}
+
+					if(isset($_POST["birthday"]) && $_POST["birthday"] != ""){
+						$birthday = $_POST["birthday"];
+
+						$usuario->birthday = $birthday;
+					}
+
+					if(isset($_POST["city"]) && $_POST["city"] != ""){
+						$city = $_POST["city"];
+
+						$usuario->city = $city;
+					}
+
+					
+					$usuario->save();
+
+					return $this->createResponse(200, 'Usuario editado', ['user' => $usuario]);
+				}else{
+					return $this->createResponse(400, 'El usuario no existe');
+				}
+					
+			}else{
+
+				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+			}
+		}catch (Exception $e){
+
+			return $this->createResponse(500, $e->getMessage());
+
+		} 
+			
+	}
+
+	function post_editpassword(){
+
+		try{
+
+
+			if(!isset($_POST["password"]) || $_POST["password"] == "" ||
+				!isset($_POST["id_user"]) || $_POST["id_user"] == ""){
+				return $this->createResponse(400, 'Faltan parámetros (password y/o id_user)');
+			}
+
+			$id_user = $_POST['id_user'];
+ 
+			$user = Model_Users::find($id_user);
+
+			if($user != null){
+
+				$password = $_POST["password"];
+				$user->password = $password;
+
+				$user->save();
+
+				return $this->createResponse(200, 'Password modificada', ['user' => $user]);
+			}else{
+				return $this->createResponse(400, 'El usuario no existe');
+			}
+					
+		}catch (Exception $e){
+
+			return $this->createResponse(500, $e->getMessage());
+
+		} 
+			
+	}
+
+	function post_follow(){
+
+		try{
+
+			if(!isset(apache_request_headers()['Authorization']) || apache_request_headers()['Authorization'] == ""){
+				return $this->createResponse(400, 'Falta el token en el header');
+			}
+
+			if(!isset($_POST["id_user_follow"]) || $_POST["id_user_follow"] == ""){
+				return $this->createResponse(400, 'Falta el parámetro id_user_follow');
+			}
+
+			$id_user_follow = $_POST['id_user_follow'];
+
+			$jwt = apache_request_headers()['Authorization'];
+
+			if($this->validateToken($jwt)){
+
+				$token = JWT::decode($jwt, $this->key, array('HS256'));
+				$id = $token->data->id;
+
+				$follow = new Model_Follow(array('id_followed' => $id_user_follow, 'id_follower' => $id));
+				$follow->save();
+
+				return $this->createResponse(200, 'Usuario seguido', ['user_followed' => $id_user_follow]);
+
+			}else{
+
+				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+			}
+
+		}catch(Exception $e){
+			return $this->createResponse(500, $e->getMessage());
+		}
+
+	}
+
+	function post_unfollow(){
+
+		try{
+
+			if(!isset(apache_request_headers()['Authorization']) || apache_request_headers()['Authorization'] == ""){
+				return $this->createResponse(400, 'Falta el token en el header');
+			}
+
+			if(!isset($_POST["id_user_unfollow"]) || $_POST["id_user_unfollow"] == ""){
+				return $this->createResponse(400, 'Falta el parámetro id_user_unfollow');
+			}
+
+			$id_user_unfollow = $_POST['id_user_unfollow'];
+
+			$jwt = apache_request_headers()['Authorization'];
+
+			if($this->validateToken($jwt)){
+
+				$token = JWT::decode($jwt, $this->key, array('HS256'));
+				$id = $token->data->id;
+
+				$follow = Model_Follow::find('first', array(
+					'where' => array(
+							array('id_followed', $id_user_unfollow),
+							array('id_follower', $id)
+					)
+				));
+
+				if($follow != null){
+
+					$follow->delete();
+
+					return $this->createResponse(200, 'El usuario ha sido dejado de seguir', ['user_unfollowed' => $id_user_unfollow]);
+				}else{
+					return $this->createResponse(400, 'El usuario no sigue al usuario indicado');
+				}
+
+			}else{
+
+				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+			}
+
+		}catch(Exception $e){
+			return $this->createResponse(500, $e->getMessage());
+		}
+
+	}
+
+	function get_allusers(){
+		try{
+
+			if(!isset(apache_request_headers()['Authorization']) || apache_request_headers()['Authorization'] == ""){
+				return $this->createResponse(400, 'Falta el token en el header');
+			}
+
+			$jwt = apache_request_headers()['Authorization'];
+
+			if($this->validateToken($jwt)){
+
+				$users = Model_Users::find('all');
+
+				return $this->createResponse(200, 'Todos los usuarios devueltos', ['users' => $users]);
+
+			}else{
+				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+			}
+
+		}catch(Exception $e){
+			return $this->createResponse(500, $e->getMessage());
+		}
+	}
+
+	function get_nearusers(){
+		try{
+
+			if(!isset(apache_request_headers()['Authorization']) || apache_request_headers()['Authorization'] == ""){
+				return $this->createResponse(400, 'Falta el token en el header');
+			}
+
+			$jwt = apache_request_headers()['Authorization'];
+
+			if($this->validateToken($jwt)){
+
+				$users = Model_Users::find('all');
+
+				return $this->createResponse(200, 'Todos los usuarios devueltos', ['users' => $users]);
+
+			}else{
+				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+			}
+
+		}catch(Exception $e){
+			return $this->createResponse(500, $e->getMessage());
+		}
+	}
+
+	function get_followingusers(){
+		try{
+
+			if(!isset(apache_request_headers()['Authorization']) || apache_request_headers()['Authorization'] == ""){
+				return $this->createResponse(400, 'Falta el token en el header');
+			}
+
+			$jwt = apache_request_headers()['Authorization'];
+
+			if($this->validateToken($jwt)){
+
+				$token = JWT::decode($jwt, $this->key, array('HS256'));
+				$id = $token->data->id;
+
+				$follows = Model_Follow::find('all', array(
+					'where' => array(
+							array('id_follower', $id)
+					)
+				));
+
+				return $this->createResponse(200, 'Todos los usuarios a los que sigues devueltos', ['users' => $follows]);
+
+			}else{
+				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+			}
+
+		}catch(Exception $e){
+			return $this->createResponse(500, $e->getMessage());
+		}
+	}
+
+	function get_user(){
+		try{
+
+			if(!isset(apache_request_headers()['Authorization']) || apache_request_headers()['Authorization'] == ""){
+				return $this->createResponse(400, 'Falta el token en el header');
+			}
+
+			if(!isset($_GET["id_user"]) || $_GET["id_user"] == ""){
+				return $this->createResponse(400, 'Falta el parámetro id_user');
+			}
+
+			$id_user = $_GET['id_user'];
+
+			$jwt = apache_request_headers()['Authorization'];
+
+			if($this->validateToken($jwt)){
+
+				$user = Model_Users::find($id_user);
+
+				return $this->createResponse(200, 'Usuario devuelto', ['user' => $user]);
+
+			}else{
+				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+			}
+
+		}catch(Exception $e){
+			return $this->createResponse(500, $e->getMessage());
+		}
+	}
+
+	function post_editprivacity(){
+
+		try{
+			if(!isset(apache_request_headers()['Authorization']) || apache_request_headers()['Authorization'] == ""){
+				return $this->createResponse(400, 'Falta el token en el header');
+			}
+
+			$jwt = apache_request_headers()['Authorization'];
+
+			if($this->validateToken($jwt)){
+
+				if((!isset($_POST["profile"]) || $_POST["profile"] == "") &&
+					(!isset($_POST["friends"]) || $_POST["friends"] == "") &&
+					(!isset($_POST["lists"]) || $_POST["lists"] == "") &&
+					(!isset($_POST["localization"]) || $_POST["localization"] == "") &&
+					(!isset($_POST["notifications"]) || $_POST["notifications"] == "")){
+					return $this->createResponse(400, 'Faltan parámetros, es necesario al menos uno (profile o friends o lists o localization o notifications)');
+				}
+
+				$token = JWT::decode($jwt, $this->key, array('HS256'));
+				$id = $token->data->id;
+
+				$user = Model_Users::find($id); 
+
+				$privacity = Model_Privacity::find($user->id_privacity);
+
+				if(isset($_POST["profile"]) && $_POST["profile"] != ""){
+					$profile = $_POST["profile"];
+
+					$privacity->profile = $profile;
+				}
+
+				if(isset($_POST["friends"]) && $_POST["friends"] != ""){
+					$friends = $_POST["friends"];
+
+					$privacity->friends = $friends;
+				}
+
+				if(isset($_POST["lists"]) && $_POST["lists"] != ""){
+					$lists = $_POST["lists"];
+
+					$privacity->lists = $lists;
+				}
+
+				if(isset($_POST["localization"]) && $_POST["localization"] != ""){
+					$localization = $_POST["localization"];
+
+					$privacity->localization = $localization;
+				}
+
+				if(isset($_POST["notifications"]) && $_POST["notifications"] != ""){
+					$notifications = $_POST["notifications"];
+
+					$privacity->notifications = $notifications;
+				}
+
+				$privacity->save();
+
+				return $this->createResponse(200, 'Privacidad modificada', ['privacity' => $privacity]);
+
+			}else{
+				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+			}
+
+
+		}catch(Exception $e){
+			return $this->createResponse(500, $e->getMessage());
+		}
+
+	}
+
+	private function userExists($username, $email){
+
+		$userDB = Model_Users::find('all', array(
+					'where' => array(
+							array('username', $username),
+							'or' => array(
+								array('email', $email),
+							),
+					)
+				)); 
+
+		if($userDB != null){
+			return true;
+		}else{
+			return false;
+		}
+	}
+
+	function validateToken($jwt){
+
+		try{
+			$token = JWT::decode($jwt, $this->key, array('HS256'));
+
+			$username = $token->data->username;
+			$password = $token->data->password;
+
+			$userDB = Model_Users::find('all', array(
+			'where' => array(
+					array('username', $username),
+					array('password', $password)
+					)
+			));
+
+			if($userDB != null){
+				return true;
+			}else{
+				return false;
+			}
+		}catch(Exception $e){
+			return false;
+		}
+		
+	}
+
+	function createResponse($code, $message, $data = []){
+
+		$json = $this->response(array(
+					'code' => $code,
+					'message' => $message,
+					'data' => $data
+				));
+
+		return $json;
+
+	}
 
 }

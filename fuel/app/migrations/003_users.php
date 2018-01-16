@@ -14,12 +14,12 @@ class Users
             'city' => array('type' => 'varchar', 'constraint' => 100, 'null' => true),
             'description' => array('type' => 'varchar', 'constraint' => 100, 'null' => true),
             'birthday' => array('type' => 'varchar', 'constraint' => 100, 'null' => true),
-            'id_device' => array('type' => 'varchar', 'constraint' => 100, 'null' => true),
+            'id_device' => array('type' => 'int', 'constraint' => 100, 'null' => true),
             'photo' => array('type' => 'varchar', 'constraint' => 100, 'null' => true),
-            'x' => array('type' => 'decimal', 'constraint' => 50, 'null' => true),
-            'y' => array('type' => 'decimal', 'constraint' => 50, 'null' => true),
+            'x' => array('type' => 'float', 'constraint' => 50, 'null' => true),
+            'y' => array('type' => 'float', 'constraint' => 50, 'null' => true),
             'id_rol' => array('type' => 'int', 'constraint' => 5, 'null' => false),
-            'id_privacity' => array('type' => 'int', 'constraint' => 5, 'null' => true)
+            'id_privacity' => array('type' => 'int', 'constraint' => 5, 'null' => false)
         ), array('id'),
             true,
             'InnoDB',

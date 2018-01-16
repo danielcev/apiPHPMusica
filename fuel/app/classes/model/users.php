@@ -14,6 +14,20 @@ class Model_Users extends Orm\Model
             'key_to' => 'id_user',
             'cascade_save' => true,
             'cascade_delete' => true,
+        ),
+        'follow' => array(
+            'key_from' => 'id',
+            'model_to' => 'Model_Follow',
+            'key_to' => 'id_followed',
+            'cascade_save' => true,
+            'cascade_delete' => true,
+        ),
+        'follow' => array(
+            'key_from' => 'id',
+            'model_to' => 'Model_Follow',
+            'key_to' => 'id_follower',
+            'cascade_save' => true,
+            'cascade_delete' => true,
         )
     );
 
