@@ -14,39 +14,41 @@ class Controller_Lists extends Controller_Rest{
 
             $jwt = apache_request_headers()['Authorization'];
 
-            if (empty($_POST['titulo'])) 
+            if (empty($_POST['title'])) 
             {
 
-                $this->createResponse(400, 'Parámetros incorrectos');
+                return $this->createResponse(400, 'Parámetros incorrectos');
 
             }else{
                 if($this->validateToken($jwt)){
+
                     $token = JWT::decode($jwt, $this->key, array('HS256'));
-                    $id_usuario = $token->data->id;
-                    $titulo = $_POST['titulo'];
+                    $id_user = $token->data->id;
 
-                    if(!$this->listExists($id_usuario, $titulo)){
+                    $title = $_POST['title'];
 
-                        $props = array('id_usuario' => $id_usuario, 'titulo' => $titulo);
+                    if(!$this->listExists($id_user, $title)){
+
+                        $props = array('id_user' => $id_user, 'title' => $title, 'editable' => true);
 
                         $new = new Model_Lists($props);
                         $new->save();
 
-                        $this->createResponse(200, 'Lista creada', ['list' => $new]);
+                        return $this->createResponse(200, 'Lista creada', ['list' => $new]);
 
                     }else{
-                        $this->createResponse(400, 'Lista ya creada por este usuario');
+                        return $this->createResponse(400, 'Lista ya creada por este usuario');
                     }
 
                 }else{
-                  $this->createResponse(400, 'El token no es válido');
+                    return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
                 }
             }   
 	  
         }
         catch (Exception $e) 
         {
-            $this->createResponse(500, $e->getMessage());
+            return $this->createResponse(500, $e->getMessage());
 
         }      
 
@@ -59,64 +61,116 @@ class Controller_Lists extends Controller_Rest{
 
             if($this->validateToken($jwt)){
 
-              $token = JWT::decode($jwt, $this->key, array('HS256'));
-              $id_usuario = $token->data->id;
+                if(!isset($_GET['id_user']) || $_GET['id_user'] == ""){
+                    return $this->createResponse(400, 'Parámetros incorrectos');
+                }
+
+                $id_user = $_GET['id_user'];
+
+                $user = Model_Users::find('first',array(
+                    'where'=> array(
+                        array('id', $id_user)
+                    )));
+
+                if($user == null){
+                    return $this->createResponse(400, 'El usuario no existe');
+                }
               
-              $lists = Model_Lists::find('all', array(
+                $lists = Model_Lists::find('all', array(
                     'where' => array(
-                        array('id_usuario', $id_usuario),
+                        array('id_user', $id_user),
                   )));
 
-              if($lists != null){
-                $this->createResponse(200, 'Listas devueltas', ['lists' => $lists]);
-              }else{
-                $this->createResponse(200, 'No hay listas', ['lists' => null]);
-              }
+                if($lists != null){
+                    return $this->createResponse(200, 'Listas devueltas', ['lists' => $lists]);
+                }else{
+                    return $this->createResponse(400, 'El usuario no tiene listas');
+                }
 
             }else{
 
-              $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+              return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
             }
         }catch (Exception $e) {
-            $this->createResponse(500, $e->getMessage());
+            return $this->createResponse(500, $e->getMessage());
 
         }  
 
     }
 
-    function post_borrar(){
+    function get_list(){
+        try{
+            $jwt = apache_request_headers()['Authorization'];
+
+            if($this->validateToken($jwt)){
+
+                if(!isset($_GET['id_list']) || $_GET['id_list'] == ""){
+                    return $this->createResponse(400, 'Parámetros incorrectos');
+                }
+
+                $id_list = $_GET['id_list'];
+              
+                $list = Model_Lists::find('first', array(
+                    'where' => array(
+                        array('id', $id_list),
+                  )));
+
+                if($list != null){
+                    return $this->createResponse(200, 'Lista devuelta', ['list' => $list]);
+                }else{
+                    return $this->createResponse(400, 'La lista no existe');
+                }
+
+            }else{
+
+              return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+            }
+        }catch (Exception $e) {
+            return $this->createResponse(500, $e->getMessage());
+
+        } 
+    }
+
+    function post_delete(){
 
         try{
             $jwt = apache_request_headers()['Authorization'];
 
             if($this->validateToken($jwt)){
                 $token = JWT::decode($jwt, $this->key, array('HS256'));
-                $id = $_POST['id'];
+
+                if(!isset($_POST['id_list']) || $_POST['id_list'] == ""){
+                    return $this->createResponse(400, 'Parámetros incorrectos');
+                }
+
+                $id_list = $_POST['id_list'];
            
                 $list = Model_Lists::find('first', array(
                     'where' => array(
-                        array('id', $id),
-                        array('id_usuario', $token->data->id)
+                        array('id', $id_list),
+                        array('id_user', $token->data->id),
+                        array('editable', true)
                     )
                 ));
 
-                if ($list != null){
+                if($list != null){
                     $list->delete();
 
-                    $this->createResponse(200, 'Lista borrada correctamente', ['list' => $list]);
+                    return $this->createResponse(200, 'Lista borrada correctamente', ['list' => $list]);
                 }else{
 
-                    $this->createResponse(400, 'No puedes realizar esta acción');
+                    return $this->createResponse(400, 'No puedes realizar esta acción');
                 }
               
             }else{
 
-                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+                return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
             }
         }catch (Exception $e) {
-            $this->createResponse(500, $e->getMessage());
+            return $this->createResponse(500, $e->getMessage());
 
         } 
 
@@ -129,34 +183,40 @@ class Controller_Lists extends Controller_Rest{
 
             if($this->validateToken($jwt)){
                 $token = JWT::decode($jwt, $this->key, array('HS256'));
-                $id_usuario = $token->data->id;
+                $id_user = $token->data->id;
 
-                $id = $_POST['id'];
-                $titulo = $_POST['titulo'];
+                if(!isset($_POST['id_list']) || $_POST['id_list'] == "" || !isset($_POST['title']) || $_POST['title'] == ""){
+                    
+                    return $this->createResponse(400, 'Parámetros incorrectos');
+                }
+
+                $id_list = $_POST['id_list'];
+                $title = $_POST['title'];
 
                 $list = Model_Lists::find('first', array(
                     'where' => array(
-                        array('id', $id),
-                        array('id_usuario', $id_usuario)
+                        array('id', $id_list),
+                        array('id_user', $id_user),
+                        array('editable', true)
                     )
                 ));
 
                 if($list != null){
-                    $list->titulo = $titulo;
+                    $list->title = $title;
                     $list->save();
 
-                    $this->createResponse(200, 'Lista editada', ['list' => $list]);
+                    return $this->createResponse(200, 'Lista editada', ['list' => $list]);
                 }else{
-                    $this->createResponse(400, 'No puedes realizar esta acción');
+                    return $this->createResponse(400, 'No puedes editar esta lista');
                 }
 
             }else{
 
-                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+                return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
             }
         }catch (Exception $e) {
-            $this->createResponse(500, $e->getMessage());
+            return $this->createResponse(500, $e->getMessage());
 
         }
         
@@ -169,62 +229,68 @@ class Controller_Lists extends Controller_Rest{
             $jwt = apache_request_headers()['Authorization'];
 
             if($this->validateToken($jwt)){
-                $id_cancion = $_POST['id_cancion'];
-                $id_lista = $_POST['id_lista'];
 
-                $contener = Model_Contain::find('first', array(
+                if(!isset($_POST['id_song']) || $_POST['id_song'] == "" || !isset($_POST['id_list']) || $_POST['id_list'] == ""){
+                    
+                    return $this->createResponse(400, 'Parámetros incorrectos');
+                }
+
+                $id_song = $_POST['id_song'];
+                $id_list = $_POST['id_list'];
+
+                $contain = Model_Contain::find('first', array(
                     'where' => array(
-                        array('id_lista', $id_lista),
-                        array('id_cancion', $id_cancion)
+                        array('id_list', $id_list),
+                        array('id_song', $id_song)
                     )
                 ));
 
-                if($contener == null){
+                if($contain == null){
                     $token = JWT::decode($jwt, $this->key, array('HS256'));
-                    $id_usuario = $token->data->id;
+                    $id_user = $token->data->id;
 
                     $list = Model_Lists::find('first', array(
                         'where' => array(
-                            array('id', $id_lista),
-                            array('id_usuario', $id_usuario)
+                            array('id', $id_list),
+                            array('id_user', $id_user)
                         )
                     ));
 
                     if($list != null){
 
-                        $props = array('id_cancion' => $id_cancion, 'id_lista' => $id_lista);
+                        $props = array('id_list' => $id_list, 'id_song' => $id_song);
 
                         $new = new Model_Contain($props);
                         $new->save();
 
-                        $this->createResponse(200, 'Canción añadida a la lista', ['list' => $list]);
+                        return $this->createResponse(200, 'Canción añadida a la lista', ['list' => $list]);
                         
                     }else{
 
-                        $this->createResponse(400, 'No tienes permiso para añadir canciones a esa lista');
+                        return $this->createResponse(400, 'No tienes permiso para añadir canciones a esa lista');
 
                     }
                 }else{
-                     $this->createResponse(400, 'La canción ya pertenece a la lista');
+                     return $this->createResponse(400, 'La canción ya pertenece a la lista');
                 }
 
             }else{
 
-                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+                return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
             }
 
         }catch(Exception $e){
-            $this->createResponse(500, $e->getMessage());
+            return $this->createResponse(500, $e->getMessage());
         }
    }
 
-   function listExists($id_usuario, $titulo){
+   function listExists($id_user, $title){
 
       $lists = Model_Lists::find('all', array(
                   'where' => array(
-                      array('id_usuario', $id_usuario),
-                      array('titulo', $titulo)
+                      array('id_user', $id_user),
+                      array('title', $title)
                 )));
 
       if($lists != null){
@@ -253,7 +319,7 @@ class Controller_Lists extends Controller_Rest{
         $username = $token->data->username;
         $password = $token->data->password;
 
-        $userDB = Model_Usuarios::find('all', array(
+        $userDB = Model_Users::find('all', array(
         'where' => array(
               array('username', $username),
               array('password', $password)

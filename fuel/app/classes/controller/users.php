@@ -49,6 +49,49 @@ class Controller_Users extends Controller_Rest
 				
 	}
 
+	function post_createadmin(){
+
+		try{
+
+			$userDB = Model_Users::find('first', array(
+					'where' => array(
+							array('id_rol', 1)
+					)
+			));
+
+			if($userDB != null){
+				return $this->createResponse(400, 'El usuario administrador ya existe');
+			}
+
+
+			if (!isset($_POST['username']) || !isset($_POST['password']) || !isset($_POST['email']) || $_POST['username'] == "" || $_POST['password'] == "" || $_POST['email'] == "") {
+
+				return $this->createResponse(400, 'Faltan parámetros (username y/o password y/o email)');
+
+			}
+
+			$username = $_POST['username'];
+			$password = $_POST['password'];
+			$email = $_POST['email'];
+
+			$newPrivacity = new Model_Privacity(array('profile' => false, 'friends' => false,'lists' =>  false,'notifications' => false,'localization' => false));
+			$newPrivacity->save();
+
+			$props = array('username' => $username, 'password' => $password, 'email' => $email, 'id_rol' => 1, 'id_privacity' => $newPrivacity->id);
+
+			$newUser = new Model_Users($props);
+			$newUser->save();
+
+			return $this->createResponse(200, 'Usuario administrador creado', ['user' => $newUser]);
+
+		}catch(Exception $e){
+
+			return $this->createResponse(500, $e->getMessage());
+
+		}
+
+	}
+
 	function get_login(){
 
 		try{

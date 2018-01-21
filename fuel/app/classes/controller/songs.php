@@ -8,72 +8,122 @@ class Controller_Songs extends Controller_Rest{
 	protected $format = 'json';
 
 	function post_create(){
-		$jwt = apache_request_headers()['Authorization'];
+		
 
         try {
-            if (!isset($_POST['titulo']) || $_POST['titulo'] == "" || $_POST['url_youtube'] == "" || !isset($_POST['url_youtube']) || $_POST['artista'] == "" || !isset($_POST['artista'])) 
+
+            $jwt = apache_request_headers()['Authorization'];
+
+            if (!isset($_POST['title']) || $_POST['title'] == "" || $_POST['url_youtube'] == "" || !isset($_POST['url_youtube']) || $_POST['artist'] == "" || !isset($_POST['artist'])) 
             {
 
-                $this->createResponse(400, 'Parámetros incorrectos');
+                return $this->createResponse(400, 'Parámetros incorrectos');
 
             }
 
             if($this->validateToken($jwt)){
 
-	            	$titulo = $_POST['titulo'];
+	            	$title = $_POST['title'];
 	            	$url_youtube = $_POST['url_youtube'];
-                    $artista = $_POST['artista'];
+                    $artist = $_POST['artist'];
 
 	            if(!$this->songExists($url_youtube)){
 
-	                $props = array('titulo' => $titulo, 'url_youtube' => $url_youtube, 'artista' => $artista);
+	                $props = array('title' => $title, 'url_youtube' => $url_youtube, 'artist' => $artist, 'reproductions' => 0);
 
 	                $new = new Model_Songs($props);
 	                $new->save();
 
-	                $this->createResponse(200, 'Canción creada', ['song' => $new]);
+	                return $this->createResponse(200, 'Canción creada', ['song' => $new]);
 
 	            }else{
-	                $this->createResponse(400, 'Canción ya existente');
+	                return $this->createResponse(400, 'Canción ya existente');
 	            }
 
 	        }else{
-	        	$this->createResponse(400, 'El token no es válido');
+	        	return $this->createResponse(400, 'El token no es válido');
 	        }
 
         }
         catch (Exception $e) 
         {
-            $this->createResponse(500, $e->getMessage());
+            return $this->createResponse(500, $e->getMessage());
 
         }      
 	}
 
-	function post_borrar(){
+    function post_song(){
         try{
             $jwt = apache_request_headers()['Authorization'];
 
             if($this->validateToken($jwt)){
+
+                if(!isset($_POST['id']) || $_POST['id'] == ""){
+                    return $this->createResponse(400, 'Parámetros incorrectos');
+                }
 
                 $id = $_POST['id'];
            
                 $song = Model_Songs::find($id);
 
                 if($song != null){
-                    $song->delete();
+                    $song->reproductions += 1;
+                    $song->save();
 
-                    $this->createResponse(200, 'Canción borrada correctamente', ['song' => $song]);
+                    return $this->createResponse(200, 'Canción devuelta', ['song' => $song]);
                 }else{
-                    $this->createResponse(400, 'La canción no existe');
+                    return $this->createResponse(400, 'La canción no existe');
                 }
               
             }else{
 
-                $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+                return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
             }
         }catch (Exception $e) {
-            $this->createResponse(500, $e->getMessage());
+            return $this->createResponse(500, $e->getMessage());
+
+        }
+    }
+
+	function post_delete(){
+        try{
+            $jwt = apache_request_headers()['Authorization'];
+
+            if($this->validateToken($jwt)){
+
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id = $token->data->id;
+     
+                $usuario = Model_Users::find($id);
+
+                if ($usuario->id_rol != 1){
+                    return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+                }
+
+                if(!isset($_POST['id_song']) || $_POST['id_song'] == ""){
+                    return $this->createResponse(400, 'Parámetros incorrectos');
+                }
+
+                $id_song = $_POST['id_song'];
+           
+                $song = Model_Songs::find($id_song);
+
+                if($song != null){
+                    $song->delete();
+
+                    return $this->createResponse(200, 'Canción borrada correctamente', ['song' => $song]);
+                }else{
+                    return $this->createResponse(400, 'La canción no existe');
+                }
+              
+            }else{
+
+                return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+            }
+        }catch (Exception $e) {
+            return $this->createResponse(500, $e->getMessage());
 
         }
     	
@@ -113,47 +163,55 @@ class Controller_Songs extends Controller_Rest{
 
             if($this->validateToken($jwt)){
 
-                if(!isset($_POST['id'])){
-                    $this->createResponse(400, 'Es necesario el parámetro id');
-                }else{
-                    $id = $_POST['id'];
-                    $song = Model_Songs::find($id);
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id = $token->data->id;
+     
+                $usuario = Model_Users::find($id);
 
-                    if($song == null){
-                        $this->createResponse(400, 'id incorrecto, la canción no existe');
-                    }else{
-                        if (empty($_POST['titulo']) && empty($_POST['url_youtube']) && empty($_POST['artista']) ){
-
-                            $this->createResponse(400, 'Parámetros incorrectos');
-
-                        }else{
-
-                            if (!empty($_POST['titulo'])){
-                                $song->titulo = $_POST['titulo'];  
-                            }
-
-                            if (!empty($_POST['url_youtube'])){
-                                $song->url_youtube = $_POST['url_youtube'];
-                            }
-
-                            if (!empty($_POST['artista'])){
-                                $song->artista = $_POST['artista'];
-                            }
-
-                            $song->save();
-
-                            $this->createResponse(200, 'Canción modificada',['song' => $song]);
-                        }
-
-                    }
- 
+                if ($usuario->id_rol != 1){
+                    return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
                 }
-   
+
+                if(!isset($_POST['id_song']) || $_POST['id_song'] == ""){
+                    return $this->createResponse(400, 'Es necesario el parámetro id');
+                }
+
+                $id_song = $_POST['id_song'];
+                $song = Model_Songs::find($id_song);
+
+                if($song == null){
+                    return $this->createResponse(400, 'La canción no existe');
+                }
+
+                if (empty($_POST['title']) && empty($_POST['url_youtube']) && empty($_POST['artist']) ){
+
+                    return $this->createResponse(400, 'Parámetros incorrectos');
+
+                }
+
+                if (!empty($_POST['titulo'])){
+                    $song->title = $_POST['title'];  
+                }
+
+                if (!empty($_POST['url_youtube'])){
+                    $song->url_youtube = $_POST['url_youtube'];
+                }
+
+                if (!empty($_POST['artist'])){
+                    $song->artist = $_POST['artist'];
+                }
+
+                $song->save();
+
+                return $this->createResponse(200, 'Canción editada',['song' => $song]);
+                
+
             }else{
 
-              $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+              return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
             }
+
         }catch (Exception $e) {
             $this->createResponse(500, $e->getMessage());
 
