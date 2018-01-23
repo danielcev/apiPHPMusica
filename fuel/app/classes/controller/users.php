@@ -22,6 +22,11 @@ class Controller_Users extends Controller_Rest
 			$password = $_POST['password'];
 			$email = $_POST['email'];
 
+
+			if (strlen($password) < 5 || strlen($password) > 12){
+				return $this->createResponse(400, 'La contraseña debe tener entre 5 y 12 caracteres');
+			}
+
 			if(!$this->userExists($username, $email)){ //Si el usuario todavía no existe
 
 				//Creamos privacidad para el nuevo usuario
@@ -527,30 +532,54 @@ class Controller_Users extends Controller_Rest
 
 	function get_followingusers(){
 		try{
-
 			if(!isset(apache_request_headers()['Authorization']) || apache_request_headers()['Authorization'] == ""){
 				return $this->createResponse(400, 'Falta el token en el header');
 			}
-
 			$jwt = apache_request_headers()['Authorization'];
-
 			if($this->validateToken($jwt)){
-
 				$token = JWT::decode($jwt, $this->key, array('HS256'));
 				$id = $token->data->id;
-
-				$follows = Model_Follow::find('all', array(
-					'where' => array(
-							array('id_follower', $id)
-					)
-				));
-
-				return $this->createResponse(200, 'Todos los usuarios a los que sigues devueltos', ['users' => $follows]);
-
+		         $query = \DB::query('SELECT *
+								 FROM   users
+								        JOIN follow
+								           ON follow.id_followed = users.id
+								 WHERE  follow.id_follower = '.$id)
+		         	->as_assoc()
+		            ->execute();   
+		            if(count($query) == 0){
+		            	return $this->createResponse(400, 'No sigues a ningún usuario');
+		            }
+				return $this->createResponse(200, 'Todos los usuarios a los que sigues devueltos', ['users' => $query]);
 			}else{
 				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 			}
-
+		}catch(Exception $e){
+			return $this->createResponse(500, $e->getMessage());
+		}
+	}
+	function get_followersusers(){
+		try{
+			if(!isset(apache_request_headers()['Authorization']) || apache_request_headers()['Authorization'] == ""){
+				return $this->createResponse(400, 'Falta el token en el header');
+			}
+			$jwt = apache_request_headers()['Authorization'];
+			if($this->validateToken($jwt)){
+				$token = JWT::decode($jwt, $this->key, array('HS256'));
+				$id = $token->data->id;
+		         $query = \DB::query('SELECT *
+								 FROM   users
+								        JOIN follow
+								           ON follow.id_follower = users.id
+								 WHERE  follow.id_followed = '.$id)
+		         	->as_assoc()
+		            ->execute();   
+		            if(count($query) == 0){
+		            	return $this->createResponse(400, 'No te sigue ningún usuario');
+		            }
+				return $this->createResponse(200, 'Todos los usuarios que te siguen devueltos', ['users' => $query]);
+			}else{
+				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+			}
 		}catch(Exception $e){
 			return $this->createResponse(500, $e->getMessage());
 		}
