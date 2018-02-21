@@ -89,6 +89,42 @@ class Controller_News extends Controller_Rest{
 
     }
 
+    function get_notice(){
+
+        try{
+            $jwt = apache_request_headers()['Authorization'];
+
+            if($this->validateToken($jwt)){
+
+				if (!isset($_GET['id']) || $_GET['id'] == "") 
+		        {
+
+	                return $this->createResponse(400, 'Falta parámetro (id)');
+
+	            }
+
+	            $id = $_GET['id'];
+
+                $notice = Model_News::find($id);
+
+                if($notice != null){
+                    $this->createResponse(200, 'Noticia devuelta', ['notice' => $notice]);
+                }else{
+                    $this->createResponse(400, 'No existe la noticia con ese id');
+                }
+
+            }else{
+
+              $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+            }
+        }catch (Exception $e) {
+            $this->createResponse(500, $e->getMessage());
+
+        }
+
+    }
+
     function get_ownnews(){
 
         try{
@@ -173,6 +209,8 @@ class Controller_News extends Controller_Rest{
 
 	            }
 
+	            $id_notice = $_POST['id_notice'];
+
 	            $notice = Model_News::find('first', array(
 						'where' => array(
 							array('id' => $id_notice),
@@ -205,7 +243,7 @@ class Controller_News extends Controller_Rest{
 	            		return $this->createResponse(400, 'El título debe contener como máximo 25 caracteres');
 	            	}
 
-	            	if(!$this->noticeExists($title)){
+	            	if(!$this->noticeExists($_POST['title'])){
 	            		$notice->title = $_POST['title'];
 	            	}else{
 	            		return $this->createResponse(400, 'Noticia ya existente');
@@ -220,7 +258,13 @@ class Controller_News extends Controller_Rest{
 	            	}
 
 	            	$notice->description = $_POST['description'];
+
 	            }
+
+	            $notice->save();
+
+	            return $this->createResponse(200, 'Noticia editada', ['notice' => $notice]);
+
 
 	        }else{
 	        	return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
@@ -252,6 +296,8 @@ class Controller_News extends Controller_Rest{
 
 	            }
 
+	            $id_notice = $_POST['id_notice'];
+
 	            $notice = Model_News::find('first', array(
 						'where' => array(
 							array('id' => $id_notice),
@@ -263,6 +309,8 @@ class Controller_News extends Controller_Rest{
 	            }
 
 	            $notice->delete();
+
+	            return $this->createResponse(200, 'Noticia eliminada', ['notice' => $notice]);
 
 	        }else{
 	        	return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
@@ -291,6 +339,41 @@ class Controller_News extends Controller_Rest{
 
 	}
 
+	function validateToken($jwt){
 
+		try{
+			$token = JWT::decode($jwt, $this->key, array('HS256'));
 
+			$username = $token->data->username;
+			$password = $token->data->password;
+
+			$userDB = Model_Users::find('all', array(
+			'where' => array(
+					array('username', $username),
+					array('password', $password)
+					)
+			));
+
+			if($userDB != null){
+				return true;
+			}else{
+				return false;
+			}
+		}catch(Exception $e){
+			return false;
+		}
+		
+	}
+
+	function createResponse($code, $message, $data = []){
+
+        $json = $this->response(array(
+            'code' => $code,
+            'message' => $message,
+            'data' => $data
+            ));
+
+        return $json;
+
+    }
 }
