@@ -7,6 +7,9 @@ class Controller_Users extends Controller_Rest
 {
 	private $key = 'my_secret_key';
 	protected $format = 'json';
+
+	private $urlPro = 'http://h2744356.stratoserver.net/danip/apiPHPMusica/public/assets/img/';
+    private $urlDev = 'http://localhost:8888/apiPHPMusica/public/assets/img/';
  
 	function post_create(){
 
@@ -79,6 +82,10 @@ class Controller_Users extends Controller_Rest
 			$password = $_POST['password'];
 			$email = $_POST['email'];
 
+			if (strlen($password) < 5 || strlen($password) > 12){
+				return $this->createResponse(400, 'La contraseña debe tener entre 5 y 12 caracteres');
+			}
+
 			$newPrivacity = new Model_Privacity(array('profile' => false, 'friends' => false,'lists' =>  false,'notifications' => false,'localization' => false));
 			$newPrivacity->save();
 
@@ -132,11 +139,62 @@ class Controller_Users extends Controller_Rest
 
 				$jwt = JWT::encode($token, $this->key);
 
-				return $this->createResponse(200, 'login correcto', ['token' => $jwt, 'username' => $username]);
+				return $this->createResponse(200, 'Login correcto', ['token' => $jwt, 'username' => $username]);
 
 			}else{
 
 				return $this->createResponse(400, 'El usuario no existe');
+
+			}
+
+		}catch (Exception $e){
+			
+			return $this->createResponse(500, $e->getMessage());
+
+		}  
+	}
+
+	function get_loginadmin(){
+
+		try{
+
+			if (!isset($_GET['username']) || !isset($_GET['password']) || $_GET['username'] == "" || $_GET['password'] == "") {
+
+				return $this->createResponse(400, 'Faltan parámetros (username y/o password)');
+
+			}
+
+			$username = $_GET['username'];
+			$password = $_GET['password'];
+
+			$userDB = Model_Users::find('first', array(
+					'where' => array(
+							array('username', $username),
+							array('password', $password),
+							array('id_rol', 1)
+					)
+			));
+
+			if($userDB != null){ //Si el usuario se ha logueado (existe en la BD)
+
+				//Creación de token
+				$time = time();
+				$token = array(
+						'iat' => $time, 
+						'data' => [ 
+							'id' => $userDB['id'],
+							'username' => $username,
+							'password' => $password
+						]
+				);
+
+				$jwt = JWT::encode($token, $this->key);
+
+				return $this->createResponse(200, 'Login correcto', ['token' => $jwt, 'username' => $username]);
+
+			}else{
+
+				return $this->createResponse(400, 'No estás autorizado');
 
 			}
 
@@ -295,11 +353,11 @@ class Controller_Users extends Controller_Rest
 			if($this->validateToken($jwt)){
 
 				if((!isset($_POST["password"]) || $_POST["password"] == "") &&
-					(!isset($_POST["photo"]) || $_POST["photo"] == "") &&
 					(!isset($_POST["description"]) || $_POST["description"] == "") &&
 					(!isset($_POST["birthday"]) || $_POST["bithday"] == "") &&
-					(!isset($_POST["city"]) || $_POST["city"] == "")){
-					return $this->createResponse(400, 'Faltan parámetros, es necesario al menos uno (password o foto o description o birthday o city)');
+					(!isset($_POST["city"]) || $_POST["city"] == "") &&
+						empty($_FILES['photo'])){
+					return $this->createResponse(400, 'Faltan parámetros, es necesario al menos uno (password o description o birthday o city)');
 				}
 
 				$token = JWT::decode($jwt, $this->key, array('HS256'));
@@ -316,11 +374,33 @@ class Controller_Users extends Controller_Rest
 						$usuario->password = $password;
 					}
 
-					if(isset($_POST["photo"]) && $_POST["photo"] != ""){
-						$photo = $_POST["photo"];
+					if (!empty($_FILES['photo'])) {
+		                
+		                $config = array(
+		                    'path' => DOCROOT . 'assets/img',
+		                    'randomize' => true,
+		                    'ext_whitelist' => array('img', 'jpg', 'jpeg', 'gif', 'png'),
+		                );
+		                
+		                Upload::process($config);
+		                
+		                if (Upload::is_valid())
+		                {
+		                    
+		                    Upload::save();
+		                    foreach(Upload::get_files() as $file)
+		                    {
+		                        
+		                        $usuario->photo = $this->urlDev.$file['saved_as'];
+		                    }
+                		}
 
-						$usuario->photo = $photo;
-					}
+		                // and process any errors
+		                foreach (Upload::get_errors() as $file)
+		                {
+		                    return $this->createResponse(500, 'Error al subir la imagen', $file);
+		                }
+            		}
 
 					if(isset($_POST["description"]) && $_POST["description"] != ""){
 						$description = $_POST["description"];
