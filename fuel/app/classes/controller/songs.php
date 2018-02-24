@@ -95,6 +95,37 @@ class Controller_Songs extends Controller_Rest{
         }
     }
 
+    function get_song(){
+        try{
+            $jwt = apache_request_headers()['Authorization'];
+
+            if($this->validateToken($jwt)){
+
+                if(!isset($_GET['id']) || $_GET['id'] == ""){
+                    return $this->createResponse(400, 'Parámetros incorrectos, falta parámetro id');
+                }
+
+                $id = $_GET['id'];
+           
+                $song = Model_Songs::find($id);
+
+                if($song != null){
+                    return $this->createResponse(200, 'Canción devuelta', ['song' => $song]);
+                }else{
+                    return $this->createResponse(400, 'La canción no existe');
+                }
+              
+            }else{
+
+                return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+
+            }
+        }catch (Exception $e) {
+            return $this->createResponse(500, $e->getMessage());
+
+        }
+    }
+
 	function post_delete(){
         try{
             $jwt = apache_request_headers()['Authorization'];
@@ -198,16 +229,16 @@ class Controller_Songs extends Controller_Rest{
 
                 }
 
-                if (!empty($_POST['titulo'])){
+                if (!empty($_POST['title'])){
                     $song->title = $_POST['title'];  
                 }
 
                 if (!empty($_POST['url_youtube'])){
                     $song->url_youtube = $_POST['url_youtube'];
 
-                    if(songExists($_POST['url_youtube'])){
-                        return $this->createResponse(400, 'La canción (con esa URL) ya existe');
-                    }
+                    // if($this->songExists($_POST['url_youtube'])){
+                    //     return $this->createResponse(400, 'La canción (con esa URL) ya existe');
+                    // }
                 }
 
                 if (!empty($_POST['artist'])){
