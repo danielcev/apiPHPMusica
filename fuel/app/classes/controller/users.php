@@ -393,6 +393,8 @@ class Controller_Users extends Controller_Rest
 		                        
 		                        $usuario->photo = $this->urlDev.$file['saved_as'];
 		                    }
+                		}else{
+                			$this->createResponse(400, 'El archivo subido no es válido');
                 		}
 
 		                // and process any errors
@@ -458,6 +460,11 @@ class Controller_Users extends Controller_Rest
 			if($user != null){
 
 				$password = $_POST["password"];
+
+				if (strlen($password) < 5 || strlen($password) > 12){
+					return $this->createResponse(400, 'La contraseña debe tener entre 5 y 12 caracteres');
+				}
+
 				$user->password = $password;
 
 				$user->save();
@@ -496,11 +503,23 @@ class Controller_Users extends Controller_Rest
 				$token = JWT::decode($jwt, $this->key, array('HS256'));
 				$id = $token->data->id;
 
-				$follow = new Model_Follow(array('id_followed' => $id_user_follow, 'id_follower' => $id));
-				$follow->save();
+				$comprobateFollow = Model_Follow::find('first', array(
+					'where' => array(
+							array('id_followed', $id_user_follow),
+							array('id_follower', $id)
+					)
+				));
 
-				return $this->createResponse(200, 'Usuario seguido', ['user_followed' => $id_user_follow]);
+				if($comprobateFollow == null){
+					$follow = new Model_Follow(array('id_followed' => $id_user_follow, 'id_follower' => $id));
+					$follow->save();
 
+					return $this->createResponse(200, 'Usuario seguido', ['user_followed' => $id_user_follow]);
+				}else{
+					return $this->createResponse(400, 'Ya estás siguiendo a ese usuario');
+				}
+
+				
 			}else{
 
 				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
@@ -547,7 +566,7 @@ class Controller_Users extends Controller_Rest
 
 					return $this->createResponse(200, 'El usuario ha sido dejado de seguir', ['user_unfollowed' => $id_user_unfollow]);
 				}else{
-					return $this->createResponse(400, 'El usuario no sigue al usuario indicado');
+					return $this->createResponse(400, 'No estás siguiendo al usuario indicado');
 				}
 
 			}else{

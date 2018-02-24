@@ -23,9 +23,18 @@ class Controller_Songs extends Controller_Rest{
 
             if($this->validateToken($jwt)){
 
-	            	$title = $_POST['title'];
-	            	$url_youtube = $_POST['url_youtube'];
-                    $artist = $_POST['artist'];
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id = $token->data->id;
+     
+                $usuario = Model_Users::find($id);
+
+                if($usuario->id_rol != 1){
+                    return $this->createResponse(400, 'El usuario debe ser administrador');
+                }
+
+            	$title = $_POST['title'];
+            	$url_youtube = $_POST['url_youtube'];
+                $artist = $_POST['artist'];
 
 	            if(!$this->songExists($url_youtube)){
 
@@ -41,7 +50,7 @@ class Controller_Songs extends Controller_Rest{
 	            }
 
 	        }else{
-	        	return $this->createResponse(400, 'El token no es válido');
+	        	return $this->createResponse(400, 'No estás autorizado para realizar esta acción');
 	        }
 
         }
@@ -59,7 +68,7 @@ class Controller_Songs extends Controller_Rest{
             if($this->validateToken($jwt)){
 
                 if(!isset($_POST['id']) || $_POST['id'] == ""){
-                    return $this->createResponse(400, 'Parámetros incorrectos');
+                    return $this->createResponse(400, 'Parámetros incorrectos, falta parámetro id');
                 }
 
                 $id = $_POST['id'];
@@ -185,7 +194,7 @@ class Controller_Songs extends Controller_Rest{
 
                 if (empty($_POST['title']) && empty($_POST['url_youtube']) && empty($_POST['artist']) ){
 
-                    return $this->createResponse(400, 'Parámetros incorrectos');
+                    return $this->createResponse(400, 'Parámetros incorrectos, es necesario al menos uno (title o url o artist)');
 
                 }
 
@@ -195,6 +204,10 @@ class Controller_Songs extends Controller_Rest{
 
                 if (!empty($_POST['url_youtube'])){
                     $song->url_youtube = $_POST['url_youtube'];
+
+                    if(songExists($_POST['url_youtube'])){
+                        return $this->createResponse(400, 'La canción (con esa URL) ya existe');
+                    }
                 }
 
                 if (!empty($_POST['artist'])){

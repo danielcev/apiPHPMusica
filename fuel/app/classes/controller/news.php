@@ -16,7 +16,7 @@ class Controller_News extends Controller_Rest{
             if (!isset($_POST['title']) || $_POST['title'] == "" || $_POST['description'] == "" || !isset($_POST['description'])) 
             {
 
-                return $this->createResponse(400, 'Parámetros incorrectos');
+                return $this->createResponse(400, 'Faltan parámetros obligatorios (title y/o description)');
 
             }
 
@@ -28,12 +28,12 @@ class Controller_News extends Controller_Rest{
             	$title = $_POST['title'];
             	$description= $_POST['description'];
 
-            	if(strlen($title) > 25){
-            		return $this->createResponse(400, 'El título debe contener como máximo 25 caracteres');
+            	if(strlen($title) > 100){
+            		return $this->createResponse(400, 'El título debe contener como máximo 100 caracteres');
             	}
 
-            	if(strlen($description) > 250){
-            		return $this->createResponse(400, 'La descripción debe contener como máximo 250 caracteres');
+            	if(strlen($description) > 1000){
+            		return $this->createResponse(400, 'La descripción debe contener como máximo 1000 caracteres');
             	}
 
 	            if(!$this->noticeExists($title)){
@@ -99,7 +99,7 @@ class Controller_News extends Controller_Rest{
 				if (!isset($_GET['id']) || $_GET['id'] == "") 
 		        {
 
-	                return $this->createResponse(400, 'Falta parámetro (id)');
+	                return $this->createResponse(400, 'Falta parámetro obligatorio (id)');
 
 	            }
 
@@ -143,7 +143,7 @@ class Controller_News extends Controller_Rest{
                 if($news != null){
                     $this->createResponse(200, 'Noticias propias devueltas', ['news' => $news]);
                 }else{
-                    $this->createResponse(200, 'No hay noticias propias');
+                    $this->createResponse(200, 'No has publicado ninguna noticia');
                 }
 
             }else{
@@ -239,8 +239,8 @@ class Controller_News extends Controller_Rest{
 
 	            if(!empty($_POST['title'])){
 
-	            	if(strlen($_POST['title']) > 25){
-	            		return $this->createResponse(400, 'El título debe contener como máximo 25 caracteres');
+	            	if(strlen($_POST['title']) > 100){
+	            		return $this->createResponse(400, 'El título debe contener como máximo 100 caracteres');
 	            	}
 
 	            	if(!$this->noticeExists($_POST['title'])){
@@ -253,8 +253,8 @@ class Controller_News extends Controller_Rest{
 
 	            if(!empty($_POST['description'])){
 
-	            	if(strlen($_POST['description']) > 250){
-	            		return $this->createResponse(400, 'La descripción debe contener como máximo 250 caracteres');
+	            	if(strlen($_POST['description']) > 1000){
+	            		return $this->createResponse(400, 'La descripción debe contener como máximo 1000 caracteres');
 	            	}
 
 	            	$notice->description = $_POST['description'];
@@ -297,6 +297,12 @@ class Controller_News extends Controller_Rest{
 	            }
 
 	            $id_notice = $_POST['id_notice'];
+
+	            $notice = Model_News::find($id_notice);
+
+	            if($notice == null){
+	            	return $this->createResponse(400, 'La noticia no existe');
+	            }
 
 	            $notice = Model_News::find('first', array(
 						'where' => array(

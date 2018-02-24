@@ -17,7 +17,7 @@ class Controller_Lists extends Controller_Rest{
             if (empty($_POST['title'])) 
             {
 
-                return $this->createResponse(400, 'Parámetros incorrectos');
+                return $this->createResponse(400, 'Parámetros incorrectos, falta parámetro title');
 
             }else{
                 if($this->validateToken($jwt)){
@@ -62,15 +62,22 @@ class Controller_Lists extends Controller_Rest{
             if($this->validateToken($jwt)){
 
                 if(!isset($_GET['id_user']) || $_GET['id_user'] == ""){
-                    return $this->createResponse(400, 'Parámetros incorrectos');
+                    $token = JWT::decode($jwt, $this->key, array('HS256'));
+                    $id_user = $token->data->id;
+                }else{
+                    $id_user = $_GET['id_user'];
+
+                    $user = Model_Users::find($id_user);
+
+                    $privacity = Model_Privacity::find($user->id_privacity);
+
+                    if($privacity->lists == 0){
+                        return $this->createResponse(400, 'El usuario no permite que se vean sus listas');
+                    }
+
                 }
 
-                $id_user = $_GET['id_user'];
-
-                $user = Model_Users::find('first',array(
-                    'where'=> array(
-                        array('id', $id_user)
-                    )));
+                $user = Model_Users::find($id_user);
 
                 if($user == null){
                     return $this->createResponse(400, 'El usuario no existe');
@@ -84,7 +91,7 @@ class Controller_Lists extends Controller_Rest{
                 if($lists != null){
                     return $this->createResponse(200, 'Listas devueltas', ['lists' => $lists]);
                 }else{
-                    return $this->createResponse(400, 'El usuario no tiene listas');
+                    return $this->createResponse(200, 'El usuario no tiene listas creadas');
                 }
 
             }else{
@@ -142,10 +149,16 @@ class Controller_Lists extends Controller_Rest{
                 $token = JWT::decode($jwt, $this->key, array('HS256'));
 
                 if(!isset($_POST['id_list']) || $_POST['id_list'] == ""){
-                    return $this->createResponse(400, 'Parámetros incorrectos');
+                    return $this->createResponse(400, 'Falta parámetro obligatorio id_list');
                 }
 
                 $id_list = $_POST['id_list'];
+
+                $list = Model_Lists::find($id_list);
+
+                if($list == null){
+                    return $this->createResponse(400, 'La lista no existe');
+                }
            
                 $list = Model_Lists::find('first', array(
                     'where' => array(
@@ -161,7 +174,7 @@ class Controller_Lists extends Controller_Rest{
                     return $this->createResponse(200, 'Lista borrada correctamente', ['list' => $list]);
                 }else{
 
-                    return $this->createResponse(400, 'No puedes realizar esta acción');
+                    return $this->createResponse(400, 'No puedes borrar esta lista');
                 }
               
             }else{
@@ -187,11 +200,17 @@ class Controller_Lists extends Controller_Rest{
 
                 if(!isset($_POST['id_list']) || $_POST['id_list'] == "" || !isset($_POST['title']) || $_POST['title'] == ""){
                     
-                    return $this->createResponse(400, 'Parámetros incorrectos');
+                    return $this->createResponse(400, 'Parámetros incorrectos, faltan parámetros obligatorios (id_list y title)');
                 }
 
                 $id_list = $_POST['id_list'];
                 $title = $_POST['title'];
+
+                $list = Model_Lists::find($id_list);
+
+                if($list == null){
+                    return $this->createResponse(400, 'La lista no existe');
+                }
 
                 $list = Model_Lists::find('first', array(
                     'where' => array(
@@ -232,11 +251,17 @@ class Controller_Lists extends Controller_Rest{
 
                 if(!isset($_POST['id_song']) || $_POST['id_song'] == "" || !isset($_POST['id_list']) || $_POST['id_list'] == ""){
                     
-                    return $this->createResponse(400, 'Parámetros incorrectos');
+                    return $this->createResponse(400, 'Parámetros incorrectos, faltan parámetros obligatorios (id_song y/o id_list)');
                 }
 
                 $id_song = $_POST['id_song'];
                 $id_list = $_POST['id_list'];
+
+                $song = Model_Songs::find($id_song);
+
+                if($song == null){
+                    return $this->createResponse(400, 'La canción no existe');
+                }
 
                 $contain = Model_Contain::find('first', array(
                     'where' => array(
