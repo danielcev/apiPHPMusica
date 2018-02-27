@@ -5,7 +5,7 @@
 
 /* LOCAL MAC MAMP*/
 
-/*
+
 return array(
 	'default' => array(
 		'connection'  => array(
@@ -16,10 +16,10 @@ return array(
 	),
 );
 
-*/
+
 
 /* PRODUCCIÓN */
-
+/*
 return array(
 	'default' => array(
 		'connection'  => array(
@@ -29,3 +29,4 @@ return array(
 		),
 	),
 );
+*/

@@ -142,7 +142,23 @@ class Controller_Lists extends Controller_Rest{
 
                 if($list != null){
 
+                    $contains = Model_Contain::find('all', array(
+                        'where' => array(
+                            array('id_list', $list->id),
+                    )));
 
+                    foreach ($contains as $key => $contain) {
+
+                        $song = Model_Songs::find($contain->id_song);
+                        $songs[] = $song;
+
+                    }
+
+                    if(isset($songs)){
+                        $list['songs'] = $songs;
+                    }else{
+                        $list['songs'] = [];
+                    }
 
                     return $this->createResponse(200, 'Lista devuelta', ['list' => $list]);
                 }else{
@@ -169,6 +185,105 @@ class Controller_Lists extends Controller_Rest{
                 $songs = Model_Songs::query()->order_by('reproductions', 'desc')->limit(10)->get();
 
                 return $this->createResponse(200, 'Lista de canciones más escuchadas devuelta', ['list' => Arr::reindex($songs)]);
+
+            }else{
+                return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+            }
+
+        }catch(Exception $e) {
+                return $this->createResponse(500, $e->getMessage());
+
+        } 
+    }
+
+    function get_listLastListenedSongs(){
+
+        try{
+            $jwt = apache_request_headers()['Authorization'];
+
+            if($this->validateToken($jwt)){
+
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id_user_logueado = $token->data->id;
+
+                $list = Model_Lists::find('first', array(
+                    'where' => array(
+                        array('id_user', $id_user_logueado),
+                        array('editable', 0)
+                    ),
+                ));
+
+                $contains = Model_Contain::find('all', array(
+                        'where' => array(
+                            array('id_list', $list->id),
+                    )));
+
+                    foreach ($contains as $key => $contain) {
+
+                        $song = Model_Songs::find($contain->id_song);
+                        $songs[] = $song;
+
+                    }
+
+                    if(isset($songs)){
+                        $list['songs'] = $songs;
+                    }else{
+                        $list['songs'] = [];
+                    }
+
+                return $this->createResponse(200, 'Lista de últimas canciones escuchadas devuelta', ['list' => Arr::reindex($songs)]);
+
+            }else{
+                return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+            }
+
+        }catch(Exception $e) {
+                return $this->createResponse(500, $e->getMessage());
+
+        } 
+    }
+
+    function get_listSuggestedSongs(){
+
+        try{
+            $jwt = apache_request_headers()['Authorization'];
+
+            if($this->validateToken($jwt)){
+
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id_user_logueado = $token->data->id;
+
+                $listLastListened = Model_Lists::find('first', array(
+                    'where' => array(
+                        array('id_user', $id_user_logueado),
+                        array('editable', 0)
+                    ),
+                ));
+
+                $contains = Model_Contain::find('all', array(
+                        'where' => array(
+                            array('id_list', $listLastListened->id),
+                    )));
+
+                foreach ($contains as $key => $contain) {
+
+                    $song = Model_Songs::find($contain->id_song);
+                    $songs[] = $song;
+
+                }
+
+                if(isset($songs)){
+                    $list['songs'] = $songs;
+                }else{
+                    $list['songs'] = [];
+                }
+
+                $allSongs = Model_Songs::query()->get();
+
+                $suggestedSongs = array_diff($allSongs, $songs);
+                $tenSuggestedSongs = array_rand($suggestedSongs, 10);
+
+                return $this->createResponse(200, 'Lista de últimas canciones escuchadas devuelta', ['list' => $tenSuggestedSongs]);
 
             }else{
                 return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
@@ -322,6 +437,10 @@ class Controller_Lists extends Controller_Rest{
                     ));
 
                     if($list != null){
+
+                        if($list->editable == 0){
+                            return $this->createResponse(400, 'La lista no es editable');
+                        }
 
                         $props = array('id_list' => $id_list, 'id_song' => $id_song);
 

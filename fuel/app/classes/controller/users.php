@@ -27,7 +27,6 @@ class Controller_Users extends Controller_Rest
 			$password = $_POST['password'];
 			$email = $_POST['email'];
 
-
 			if (strlen($password) < 5 || strlen($password) > 12){
 				return $this->createResponse(400, 'La contraseña debe tener entre 5 y 12 caracteres');
 			}
@@ -42,6 +41,9 @@ class Controller_Users extends Controller_Rest
 
 				$newUser = new Model_Users($props);
 				$newUser->save();
+
+				$listLastListened = new Model_Lists(array('title' => 'List last listened songs', 'editable' => 0, 'id_user' => $newUser->id));
+				$listLastListened->save();
 
 				return $this->createResponse(200, 'Usuario creado', ['user' => $newUser]);
 

@@ -69,12 +69,34 @@ class Controller_Songs extends Controller_Rest{
                 }
 
                 $id = $_POST['id'];
+
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $idUserLoged = $token->data->id;
            
                 $song = Model_Songs::find($id);
 
                 if($song != null){
                     $song->reproductions += 1;
                     $song->save();
+
+                    $listLastListened = Model_Lists::find('first', array(
+                        'where' => array(
+                            array('editable', 0),
+                            array('id_user', $idUserLoged)
+                        )));
+
+                    $contain = Model_Contain::find('first', array(
+                        'where' => array(
+                            array('id_list', $listLastListened->id),
+                            array('id_song', $id)
+                    )));
+
+                    if($contain != null){
+                        $contain->delete();
+                    }
+
+                    $containNew = new Model_Contain(array('id_song' => $id, 'id_list' => $listLastListened->id));
+                    $containNew->save();
 
                     return $this->createResponse(200, 'Canción devuelta', ['song' => $song]);
                 }else{
