@@ -141,6 +141,9 @@ class Controller_Lists extends Controller_Rest{
                 }
 
                 if($list != null){
+
+
+
                     return $this->createResponse(200, 'Lista devuelta', ['list' => $list]);
                 }else{
                     return $this->createResponse(400, 'La lista no existe');
@@ -153,6 +156,24 @@ class Controller_Lists extends Controller_Rest{
             }
         }catch (Exception $e) {
             return $this->createResponse(500, $e->getMessage());
+
+        } 
+    }
+
+    function get_listMostListened(){
+
+        try{
+            $jwt = apache_request_headers()['Authorization'];
+
+            if($this->validateToken($jwt)){
+                $songs = Model_Songs::query()->order_by('reproductions', 'desc')->limit(10)->get();
+
+                return $this->createResponse(200, 'Lista de canciones más escuchadas devuelta', ['list' => $songs]);
+
+            }
+
+        }catch(Exception $e) {
+                return $this->createResponse(500, $e->getMessage());
 
         } 
     }
