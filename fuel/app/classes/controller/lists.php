@@ -166,7 +166,7 @@ class Controller_Lists extends Controller_Rest{
             $jwt = apache_request_headers()['Authorization'];
 
             if($this->validateToken($jwt)){
-                $songs = Model_Songs::query()->order_by('reproductions', 'desc')->limit(10)->get();
+                $songs = DB::select()->from('songs')->order_by('reproductions', 'desc')->limit(10);
 
                 return $this->createResponse(200, 'Lista de canciones más escuchadas devuelta', ['list' => $songs]);
 
