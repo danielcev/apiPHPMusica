@@ -170,6 +170,8 @@ class Controller_Lists extends Controller_Rest{
 
                 return $this->createResponse(200, 'Lista de canciones más escuchadas devuelta', ['list' => Arr::reindex($songs)]);
 
+            }else{
+                return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
             }
 
         }catch(Exception $e) {

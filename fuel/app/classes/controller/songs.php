@@ -9,16 +9,13 @@ class Controller_Songs extends Controller_Rest{
 
 	function post_create(){
 		
-
         try {
 
             $jwt = apache_request_headers()['Authorization'];
 
             if (!isset($_POST['title']) || $_POST['title'] == "" || $_POST['url_youtube'] == "" || !isset($_POST['url_youtube']) || $_POST['artist'] == "" || !isset($_POST['artist'])) 
             {
-
                 return $this->createResponse(400, 'Parámetros incorrectos');
-
             }
 
             if($this->validateToken($jwt)){
@@ -191,7 +188,6 @@ class Controller_Songs extends Controller_Rest{
             }
         }catch (Exception $e) {
             $this->createResponse(500, $e->getMessage());
-
         }
 
     }
@@ -224,9 +220,7 @@ class Controller_Songs extends Controller_Rest{
                 }
 
                 if (empty($_POST['title']) && empty($_POST['url_youtube']) && empty($_POST['artist']) ){
-
                     return $this->createResponse(400, 'Parámetros incorrectos, es necesario al menos uno (title o url o artist)');
-
                 }
 
                 if (!empty($_POST['title'])){
@@ -235,10 +229,6 @@ class Controller_Songs extends Controller_Rest{
 
                 if (!empty($_POST['url_youtube'])){
                     $song->url_youtube = $_POST['url_youtube'];
-
-                    // if($this->songExists($_POST['url_youtube'])){
-                    //     return $this->createResponse(400, 'La canción (con esa URL) ya existe');
-                    // }
                 }
 
                 if (!empty($_POST['artist'])){
@@ -249,7 +239,6 @@ class Controller_Songs extends Controller_Rest{
 
                 return $this->createResponse(200, 'Canción editada',['song' => $song]);
                 
-
             }else{
 
               return $this->createResponse(400, 'No tienes permiso para realizar esta acción');

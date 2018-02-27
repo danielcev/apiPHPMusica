@@ -10,6 +10,8 @@ class Controller_Users extends Controller_Rest
 
 	private $urlPro = 'http://h2744356.stratoserver.net/danip/apiPHPMusica/public/assets/img/';
     private $urlDev = 'http://localhost:8888/apiPHPMusica/public/assets/img/';
+
+    private const NEAR_DISTANCE = 30.0;
  
 	function post_create(){
 
@@ -70,7 +72,6 @@ class Controller_Users extends Controller_Rest
 			if($userDB != null){
 				return $this->createResponse(400, 'El usuario administrador ya existe');
 			}
-
 
 			if (!isset($_POST['username']) || !isset($_POST['password']) || !isset($_POST['email']) || $_POST['username'] == "" || $_POST['password'] == "" || $_POST['email'] == "") {
 
@@ -616,9 +617,33 @@ class Controller_Users extends Controller_Rest
 
 			if($this->validateToken($jwt)){
 
+				$token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id_user = $token->data->id;
+                $userLogin = Model_Users::find($id_user);
+
+                if($userLogin->x == null || $userLogin->y == null){
+					return $this->createResponse(400, 'El usuario logueado no tiene localización asignada');
+                }
+
 				$users = Model_Users::find('all');
 
-				return $this->createResponse(200, 'Todos los usuarios devueltos', ['users' => $users]);
+				foreach ($users as $key => $user) {
+
+       				if($user->x != null && $user->y != null){
+
+       					if(abs($userLogin->x - $user->x)<= self::NEAR_DISTANCE && abs($userLogin->y - $user->y)<= self::NEAR_DISTANCE && $userLogin->id != $user->id){
+                    		$nearUsers[] = $user;
+                		}
+
+       				}
+        		}	
+
+        		if(empty($nearUsers))
+		        {
+		            return $this->createResponse(200, 'No hay usuarios cercanos encontradas');
+		        }
+
+				return $this->createResponse(200, 'Todos los usuarios cercanos devueltos', ['users' => $nearUsers]);
 
 			}else{
 				return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
@@ -646,7 +671,7 @@ class Controller_Users extends Controller_Rest
 		         	->as_assoc()
 		            ->execute();   
 		            if(count($query) == 0){
-		            	return $this->createResponse(400, 'No sigues a ningún usuario');
+		            	return $this->createResponse(200, 'No sigues a ningún usuario');
 		            }
 				return $this->createResponse(200, 'Todos los usuarios a los que sigues devueltos', ['users' => $query]);
 			}else{
@@ -656,6 +681,7 @@ class Controller_Users extends Controller_Rest
 			return $this->createResponse(500, $e->getMessage());
 		}
 	}
+
 	function get_followersusers(){
 		try{
 			if(!isset(apache_request_headers()['Authorization']) || apache_request_headers()['Authorization'] == ""){
@@ -673,7 +699,7 @@ class Controller_Users extends Controller_Rest
 		         	->as_assoc()
 		            ->execute();   
 		            if(count($query) == 0){
-		            	return $this->createResponse(400, 'No te sigue ningún usuario');
+		            	return $this->createResponse(200, 'No te sigue ningún usuario');
 		            }
 				return $this->createResponse(200, 'Todos los usuarios que te siguen devueltos', ['users' => $query]);
 			}else{

@@ -7,6 +7,8 @@ class Controller_News extends Controller_Rest{
 	private $key = 'my_secret_key';
 	protected $format = 'json';
 
+	private const NEAR_DISTANCE = 30.0;
+
 	function post_create(){
 
 		try {
@@ -167,25 +169,42 @@ class Controller_News extends Controller_Rest{
 
             	$token = JWT::decode($jwt, $this->key, array('HS256'));
                 $id_user = $token->data->id;
-              
-                $news = Model_News::find('all', array(
-						'where' => array(
-							array('id_user' => $id_user)
-					)));
 
-                if($news != null){
-                    $this->createResponse(200, 'Noticias propias devueltas', ['news' => $news]);
-                }else{
-                    $this->createResponse(200, 'No hay noticias propias');
+                $userLogin = Model_Users::find($id_user);
+
+                if($userLogin->x == null || $userLogin->y == null){
+					return $this->createResponse(400, 'El usuario logueado no tiene localización asignada');
                 }
+              
+                $news = Model_News::find('all');
+
+        		foreach ($news as $key => $notice) {
+
+        			$user = Model_Users::find($notice->id_user);
+
+       				if($user->x != null && $user->y != null){
+
+       					if(abs($userLogin->x - $user->x)<= self::NEAR_DISTANCE && abs($userLogin->y - $user->y)<= self::NEAR_DISTANCE && $userLogin->id != $user->id){
+                    		$nearNews[] = $notice;
+                		}
+
+       				}
+        		}	
+
+		        if(empty($nearNews))
+		        {
+		            return $this->createResponse(200, 'No hay noticias cercanas encontradas');
+		        }
+       
+       			return $this->createResponse(200, 'Lista de noticias de usuarios cercanos devuelta', ['news' => $nearNews]);
 
             }else{
 
-              $this->createResponse(400, 'No tienes permiso para realizar esta acción');
+              return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
 
             }
         }catch (Exception $e) {
-            $this->createResponse(500, $e->getMessage());
+            return $this->createResponse(500, $e->getMessage());
 
         }
 
