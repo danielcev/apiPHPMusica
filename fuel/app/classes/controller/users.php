@@ -391,7 +391,7 @@ class Controller_Users extends Controller_Rest
 		                    foreach(Upload::get_files() as $file)
 		                    {
 		                        
-		                        $usuario->photo = $this->urlDev.$file['saved_as'];
+		                        $usuario->photo = $this->urlPro.$file['saved_as'];
 		                    }
                 		}else{
                 			$this->createResponse(400, 'El archivo subido no es válido');
