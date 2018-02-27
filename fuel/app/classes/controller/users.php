@@ -75,29 +75,15 @@ class Controller_Users extends Controller_Rest
 				return $this->createResponse(400, 'El usuario administrador ya existe');
 			}
 
-			if (!isset($_POST['username']) || !isset($_POST['password']) || !isset($_POST['email']) || $_POST['username'] == "" || $_POST['password'] == "" || $_POST['email'] == "") {
-
-				return $this->createResponse(400, 'Faltan parámetros (username y/o password y/o email)');
-
-			}
-
-			$username = $_POST['username'];
-			$password = $_POST['password'];
-			$email = $_POST['email'];
-
-			if (strlen($password) < 5 || strlen($password) > 12){
-				return $this->createResponse(400, 'La contraseña debe tener entre 5 y 12 caracteres');
-			}
-
 			$newPrivacity = new Model_Privacity(array('profile' => false, 'friends' => false,'lists' =>  false,'notifications' => false,'localization' => false));
 			$newPrivacity->save();
 
-			$props = array('username' => $username, 'password' => $password, 'email' => $email, 'id_rol' => 1, 'id_privacity' => $newPrivacity->id);
+			$props = array('username' => 'admin', 'password' => 1234, 'email' => 'admin@admin.es', 'id_rol' => 1, 'id_privacity' => $newPrivacity->id);
 
-			$newUser = new Model_Users($props);
-			$newUser->save();
+			$userAdmin = new Model_Users($props);
+			$userAdmin->save();
 
-			return $this->createResponse(200, 'Usuario administrador creado', ['user' => $newUser]);
+			return $this->createResponse(200, 'Usuario administrador creado', ['admin' => $userAdmin]);
 
 		}catch(Exception $e){
 

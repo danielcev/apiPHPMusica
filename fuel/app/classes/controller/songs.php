@@ -109,7 +109,7 @@ class Controller_Songs extends Controller_Rest{
 
             }
         }catch (Exception $e) {
-            return $this->createResponse(500, $e->getMessage());
+            return $this->createResponse(500, $e->getLine());
 
         }
     }
@@ -274,6 +274,52 @@ class Controller_Songs extends Controller_Rest{
         
     }
 
+    function get_lastSongListened(){
+        try{
+            $jwt = apache_request_headers()['Authorization'];
+
+            if($this->validateToken($jwt)){
+
+                if(!isset($_GET['id_user']) || $_GET['id_user'] == ""){
+                    return $this->createResponse(400, 'Parámetros incorrectos, falta parámetro id_user');
+                }
+
+                $id = $_GET['id_user'];
+
+                $user = Model_Users::find($id);
+
+                $privacity = Model_Privacity::find($user->id_privacity);
+
+                if($privacity->lists == 0){
+                    return $this->createResponse(200, 'El usuario no permite que se muestre esta información');
+                }
+
+                $listLastListened = Model_Lists::find('first', array(
+                        'where' => array(
+                            array('editable', 0),
+                            array('id_user', $id)
+                        )));
+
+                $contain = Model_Contain::find('last', array(
+                        'where' => array(
+                            array('id_list', $listLastListened->id)
+                        )));
+
+                if($contain == null){
+                    return $this->createResponse(200, 'El usuario no ha escuchado ninguna canción');
+                }
+
+                $lastSong = Model_Songs::find($contain->id_song);
+
+                return $this->createResponse(200, 'Última canción escuchada devuelta', ['song' => $lastSong]);
+
+            }
+        }catch (Exception $e) {
+            $this->createResponse(500, $e->getMessage());
+
+        } 
+    }
+
 	function createResponse($code, $message, $data = []){
 
         $json = $this->response(array(
@@ -285,6 +331,8 @@ class Controller_Songs extends Controller_Rest{
         return $json;
 
     }
+
+
 
     function songExists($url_youtube){
 

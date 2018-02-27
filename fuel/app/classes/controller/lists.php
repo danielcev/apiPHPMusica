@@ -218,18 +218,18 @@ class Controller_Lists extends Controller_Rest{
                             array('id_list', $list->id),
                     )));
 
-                    foreach ($contains as $key => $contain) {
+                foreach ($contains as $key => $contain) {
 
-                        $song = Model_Songs::find($contain->id_song);
-                        $songs[] = $song;
+                    $song = Model_Songs::find($contain->id_song);
+                    $songs[] = $song;
 
-                    }
+                }
 
-                    if(isset($songs)){
-                        $list['songs'] = $songs;
-                    }else{
-                        $list['songs'] = [];
-                    }
+                if(isset($songs)){
+                    $list['songs'] = $songs;
+                }else{
+                    $list['songs'] = [];
+                }
 
                 return $this->createResponse(200, 'Lista de últimas canciones escuchadas devuelta', ['list' => Arr::reindex($songs)]);
 
@@ -278,7 +278,7 @@ class Controller_Lists extends Controller_Rest{
                     $list['songs'] = [];
                 }
 
-                $allSongs = Model_Songs::query()->get();
+                $allSongs = Model_Songs::find('all');
 
                 $suggestedSongs = array_diff($allSongs, $songs);
                 $tenSuggestedSongs = array_rand($suggestedSongs, 10);

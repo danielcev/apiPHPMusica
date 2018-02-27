@@ -7,9 +7,10 @@ class Contain
     function up()
     {
         \DBUtil::create_table('contain', array(
+            'id' => array('type' => 'int', 'constraint' => 5, 'auto_increment' => true, 'null' => false),
             'id_list' => array('type' => 'int', 'constraint' => 5),
             'id_song' => array('type' => 'int', 'constraint' => 5)
-        ), array('id_list', 'id_song'),
+        ), array('id','id_list', 'id_song'),
             true,
             'InnoDB',
             'utf8_unicode_ci',
