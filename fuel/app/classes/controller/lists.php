@@ -123,6 +123,23 @@ class Controller_Lists extends Controller_Rest{
                         array('id', $id_list),
                   )));
 
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id_user_logueado = $token->data->id;
+
+                $idUser = $list->id_user;
+
+                if($id_user_logueado != $idUser){
+                    $user = Model_Users::find($idUser);
+
+                    $idPrivacity = $user->id_privacity;
+
+                    $privacity = Model_Privacity::find($idPrivacity);
+
+                    if($privacity->lists == 0){
+                        return $this->createResponse(400, 'El usuario no permite que se vea esta lista');
+                    }
+                }
+
                 if($list != null){
                     return $this->createResponse(200, 'Lista devuelta', ['list' => $list]);
                 }else{
