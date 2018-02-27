@@ -11,7 +11,7 @@ class Controller_Users extends Controller_Rest
 	private $urlPro = 'http://h2744356.stratoserver.net/danip/apiPHPMusica/public/assets/img/';
     private $urlDev = 'http://localhost:8888/apiPHPMusica/public/assets/img/';
 
-    private const NEAR_DISTANCE = 30.0;
+    private $NEAR_DISTANCE = 30.0;
  
 	function post_create(){
 

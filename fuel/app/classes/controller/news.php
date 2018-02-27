@@ -7,7 +7,7 @@ class Controller_News extends Controller_Rest{
 	private $key = 'my_secret_key';
 	protected $format = 'json';
 
-	private const NEAR_DISTANCE = 30.0;
+	private $NEAR_DISTANCE = 30.0;
 
 	function post_create(){
 
