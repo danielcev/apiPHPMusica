@@ -38,18 +38,16 @@ class Controller_News extends Controller_Rest{
             		return $this->createResponse(400, 'La descripción debe contener como máximo 1000 caracteres');
             	}
 
-	            if(!$this->noticeExists($title)){
-
-	                $props = array('title' => $title, 'description' => $description, 'id_user' => $id_user);
-
-	                $newNotice = new Model_News($props);
-	                $newNotice->save();
-
-	                return $this->createResponse(200, 'Noticia creada', ['notice' => $newNotice]);
-
-	            }else{
-	                return $this->createResponse(400, 'Noticia ya existente');
+	            if($this->noticeExists($title)){
+					return $this->createResponse(400, 'Noticia ya existente con el título introducido');
 	            }
+
+                $props = array('title' => $title, 'description' => $description, 'id_user' => $id_user);
+
+                $newNotice = new Model_News($props);
+                $newNotice->save();
+
+                return $this->createResponse(200, 'Noticia creada', ['notice' => $newNotice]);
 
 	        }else{
 	        	return $this->createResponse(400, 'No tienes permiso para realizar esta acción');

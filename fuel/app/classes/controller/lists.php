@@ -27,19 +27,18 @@ class Controller_Lists extends Controller_Rest{
 
                     $title = $_POST['title'];
 
-                    if(!$this->listExists($id_user, $title)){
-
-                        $props = array('id_user' => $id_user, 'title' => $title, 'editable' => true);
-
-                        $new = new Model_Lists($props);
-                        $new->save();
-
-                        return $this->createResponse(200, 'Lista creada', ['list' => $new]);
-
-                    }else{
+                    if($this->listExists($id_user, $title)){
                         return $this->createResponse(400, 'Lista ya creada por este usuario');
                     }
 
+                    $props = array('id_user' => $id_user, 'title' => $title, 'editable' => true);
+
+                    $new = new Model_Lists($props);
+                    $new->save();
+
+                    return $this->createResponse(200, 'Lista creada', ['list' => $new]);
+
+                
                 }else{
                     return $this->createResponse(400, 'No tienes permiso para realizar esta acción');
                 }
@@ -367,6 +366,10 @@ class Controller_Lists extends Controller_Rest{
                     return $this->createResponse(400, 'La lista no existe');
                 }
 
+                if($this->listExists($id_user, $title)){
+                    return $this->createResponse(400, 'Ya tienes creada una lista con ese nombre');
+                }
+
                 $list = Model_Lists::find('first', array(
                     'where' => array(
                         array('id', $id_list),
@@ -425,37 +428,38 @@ class Controller_Lists extends Controller_Rest{
                     )
                 ));
 
-                if($contain == null){
-                    $token = JWT::decode($jwt, $this->key, array('HS256'));
-                    $id_user = $token->data->id;
+                if($contain != null){
 
-                    $list = Model_Lists::find('first', array(
-                        'where' => array(
-                            array('id', $id_list),
-                            array('id_user', $id_user)
-                        )
-                    ));
+                    return $this->createResponse(400, 'La canción ya pertenece a la lista');
+                }
 
-                    if($list != null){
+                $token = JWT::decode($jwt, $this->key, array('HS256'));
+                $id_user = $token->data->id;
 
-                        if($list->editable == 0){
-                            return $this->createResponse(400, 'La lista no es editable');
-                        }
+                $list = Model_Lists::find('first', array(
+                    'where' => array(
+                        array('id', $id_list),
+                        array('id_user', $id_user)
+                    )
+                ));
 
-                        $props = array('id_list' => $id_list, 'id_song' => $id_song);
+                if($list != null){
 
-                        $new = new Model_Contain($props);
-                        $new->save();
-
-                        return $this->createResponse(200, 'Canción añadida a la lista', ['list' => $list]);
-                        
-                    }else{
-
-                        return $this->createResponse(400, 'No tienes permiso para añadir canciones a esa lista');
-
+                    if($list->editable == 0){
+                        return $this->createResponse(400, 'La lista no es editable');
                     }
+
+                    $props = array('id_list' => $id_list, 'id_song' => $id_song);
+
+                    $new = new Model_Contain($props);
+                    $new->save();
+
+                    return $this->createResponse(200, 'Canción añadida a la lista', ['list' => $list]);
+                    
                 }else{
-                     return $this->createResponse(400, 'La canción ya pertenece a la lista');
+
+                    return $this->createResponse(400, 'No tienes permiso para añadir canciones a esa lista');
+
                 }
 
             }else{

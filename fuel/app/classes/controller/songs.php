@@ -33,18 +33,17 @@ class Controller_Songs extends Controller_Rest{
             	$url_youtube = $_POST['url_youtube'];
                 $artist = $_POST['artist'];
 
-	            if(!$this->songExists($url_youtube)){
+	            if($this->songExists($url_youtube)){
+                    return $this->createResponse(400, 'Canción ya existente');
+                }
 
-	                $props = array('title' => $title, 'url_youtube' => $url_youtube, 'artist' => $artist, 'reproductions' => 0);
+                $props = array('title' => $title, 'url_youtube' => $url_youtube, 'artist' => $artist, 'reproductions' => 0);
 
-	                $new = new Model_Songs($props);
-	                $new->save();
+                $new = new Model_Songs($props);
+                $new->save();
 
-	                return $this->createResponse(200, 'Canción creada', ['song' => $new]);
+                return $this->createResponse(200, 'Canción creada', ['song' => $new]);
 
-	            }else{
-	                return $this->createResponse(400, 'Canción ya existente');
-	            }
 
 	        }else{
 	        	return $this->createResponse(400, 'No estás autorizado para realizar esta acción');
@@ -250,6 +249,11 @@ class Controller_Songs extends Controller_Rest{
                 }
 
                 if (!empty($_POST['url_youtube'])){
+
+                    if(songExists($_POST['url_youtube'])){
+                        return $this->createResponse(400, 'Ya existe una canción con esa URL');
+                    }
+
                     $song->url_youtube = $_POST['url_youtube'];
                 }
 
